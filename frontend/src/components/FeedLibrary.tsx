@@ -33,8 +33,8 @@ interface FeedLibraryProps {
 }
 
 // Comprehensive feed library with Finland and international sources
-// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unused-vars
-// @ts-ignore - Kept for future reference
+// @ts-expect-error - Kept for future reference
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _FEED_LIBRARY: FeedSuggestion[] = [
   // Finland - News (Finnish)
   { name: 'Yle Uutiset - Tuoreimmat', url: 'https://yle.fi/rss/uutiset/tuoreimmat', category: 'News', country: 'FI', description: 'Latest Finnish news from Yle' },
