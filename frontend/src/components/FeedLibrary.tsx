@@ -98,13 +98,17 @@ const FEED_LIBRARY: FeedSuggestion[] = [
 
 export const FeedLibrary: React.FC<FeedLibraryProps> = ({
   feeds = [],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSelectFeed: _onSelectFeed,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   activeFeedUrls: _activeFeedUrls = [],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   inactiveFeedUrls: _inactiveFeedUrls = [],
   onRemoveFeed,
   onReactivate,
   onEdit,
   onRefresh,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isAdding: _isAdding = false,
   isRefreshing = false
 }) => {
