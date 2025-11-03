@@ -84,6 +84,7 @@ export const CommandPaletteProvider: React.FC<CommandPaletteProviderProps> = ({ 
 
   const commandList = useMemo(() => {
     return Array.from(commandsRef.current.values());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [version]);
 
   return (
@@ -107,6 +108,7 @@ export const CommandPaletteProvider: React.FC<CommandPaletteProviderProps> = ({ 
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCommandPalette = () => {
   const context = useContext(CommandPaletteContext);
   if (!context) {
@@ -240,7 +242,7 @@ const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
                 {group}
               </div>
               <ul className="mt-2">
-                {items.map((command, index) => {
+                {items.map((command) => {
                   const isActive = filteredCommands[activeIndex]?.id === command.id;
                   return (
                     <li

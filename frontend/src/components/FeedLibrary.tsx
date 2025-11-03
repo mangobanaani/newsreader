@@ -33,6 +33,7 @@ interface FeedLibraryProps {
 }
 
 // Comprehensive feed library with Finland and international sources
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const FEED_LIBRARY: FeedSuggestion[] = [
   // Finland - News (Finnish)
   { name: 'Yle Uutiset - Tuoreimmat', url: 'https://yle.fi/rss/uutiset/tuoreimmat', category: 'News', country: 'FI', description: 'Latest Finnish news from Yle' },
@@ -97,14 +98,14 @@ const FEED_LIBRARY: FeedSuggestion[] = [
 
 export const FeedLibrary: React.FC<FeedLibraryProps> = ({
   feeds = [],
-  onSelectFeed,
-  activeFeedUrls = [],
-  inactiveFeedUrls = [],
+  onSelectFeed: _onSelectFeed,
+  activeFeedUrls: _activeFeedUrls = [],
+  inactiveFeedUrls: _inactiveFeedUrls = [],
   onRemoveFeed,
   onReactivate,
   onEdit,
   onRefresh,
-  isAdding = false,
+  isAdding: _isAdding = false,
   isRefreshing = false
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -115,7 +116,7 @@ export const FeedLibrary: React.FC<FeedLibraryProps> = ({
 
   // Filter active and inactive feeds
   const activeFeeds = feeds?.filter(f => f.is_active) || [];
-  const inactiveFeeds = feeds?.filter(f => !f.is_active) || [];
+  const inactiveFeeds = useMemo(() => feeds?.filter(f => !f.is_active) || [], [feeds]);
 
   // Get unique countries and categories from inactive feeds
   const countries = useMemo(() => {

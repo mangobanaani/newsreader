@@ -173,7 +173,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       const data = await articlesApi.getLLMInsights(article.id);
       setInsights(data);
       setShowInsights(true);
-    } catch (error) {
+    } catch {
       setInsightsError('Unable to generate AI insights right now.');
       setShowInsights(true);
     } finally {
