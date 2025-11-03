@@ -33,7 +33,8 @@ interface FeedLibraryProps {
 }
 
 // Comprehensive feed library with Finland and international sources
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-unused-vars
+// @ts-ignore - Kept for future reference
 const _FEED_LIBRARY: FeedSuggestion[] = [
   // Finland - News (Finnish)
   { name: 'Yle Uutiset - Tuoreimmat', url: 'https://yle.fi/rss/uutiset/tuoreimmat', category: 'News', country: 'FI', description: 'Latest Finnish news from Yle' },
@@ -334,7 +335,7 @@ export const FeedLibrary: React.FC<FeedLibraryProps> = ({
               Finland
             </button>
           )}
-          {categories.includes('Tech') && (
+          {categories.length > 0 && categories.includes('Tech' as never) && (
             <button
               onClick={() => { setSelectedCountry('all'); setSelectedCategory('Tech'); }}
               className={`px-4 py-2 rounded-lg transition-colors ${

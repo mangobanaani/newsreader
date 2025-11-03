@@ -101,7 +101,7 @@ export const FeedManagement: React.FC = () => {
                 updateMutation.mutate({ id: feedToReactivate.id, data: { title: feedToReactivate.title || undefined } });
               }
             }}
-            onEdit={(feed) => setEditingFeed({ ...feed, user_id: feed.user_id || 0 })}
+            onEdit={(feed) => setEditingFeed(feed)}
             onRefresh={(feedId) => refreshMutation.mutate(feedId)}
             isAdding={createMutation.isPending}
             isRefreshing={refreshMutation.isPending}
