@@ -93,11 +93,16 @@ Ensure the response is valid JSON.
         return {
             "summary": parsed.get("summary", "") or self._build_summary(article),
             "key_points": parsed.get("key_points", []) or self._build_key_points(article),
-            "reliability_score": parsed.get("reliability_score", self._estimate_reliability(article)),
-            "reliability_label": parsed.get("reliability_label") or self._reliability_label(self._estimate_reliability(article)),
-            "reliability_reason": parsed.get("reliability_reason") or self._default_reliability_reason(article),
+            "reliability_score": parsed.get(
+                "reliability_score", self._estimate_reliability(article)
+            ),
+            "reliability_label": parsed.get("reliability_label")
+            or self._reliability_label(self._estimate_reliability(article)),
+            "reliability_reason": parsed.get("reliability_reason")
+            or self._default_reliability_reason(article),
             "tone": parsed.get("tone") or self._estimate_tone(article),
-            "suggested_actions": parsed.get("suggested_actions", []) or self._suggest_actions(article),
+            "suggested_actions": parsed.get("suggested_actions", [])
+            or self._suggest_actions(article),
         }
 
     def _fallback_insights(self, article: Article, error: str | None = None) -> dict[str, Any]:
@@ -116,17 +121,22 @@ Ensure the response is valid JSON.
         text = article.description or article.content or article.title
         if not text:
             return "Summary unavailable."
-        sentences = [s.strip() for s in text.replace('\n', ' ').split('.') if s.strip()]
-        return '. '.join(sentences[:3]) + ('.' if sentences else '')
+        sentences = [s.strip() for s in text.replace("\n", " ").split(".") if s.strip()]
+        return ". ".join(sentences[:3]) + ("." if sentences else "")
 
     def _build_key_points(self, article: Article) -> list[str]:
         text = article.description or article.content or ""
-        sentences = [s.strip() for s in text.replace('\n', ' ').split('.') if s.strip()]
+        sentences = [s.strip() for s in text.replace("\n", " ").split(".") if s.strip()]
         return sentences[:4]
 
     def _estimate_reliability(self, article: Article) -> float:
         score = 0.6
-        if article.readability_label and article.readability_label in {"Standard", "Fairly Easy", "Easy", "Very Easy"}:
+        if article.readability_label and article.readability_label in {
+            "Standard",
+            "Fairly Easy",
+            "Easy",
+            "Very Easy",
+        }:
             score += 0.1
         if article.sentiment_score is not None:
             if abs(article.sentiment_score) <= 0.2:
@@ -163,7 +173,7 @@ Ensure the response is valid JSON.
             parts.append(f"Readability: {article.readability_label}")
         if error:
             parts.append("Generated via offline heuristics")
-        return '; '.join(parts) or "Heuristic assessment based on metadata"
+        return "; ".join(parts) or "Heuristic assessment based on metadata"
 
     def _suggest_actions(self, article: Article) -> list[str]:
         actions: list[str] = []

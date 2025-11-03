@@ -145,28 +145,26 @@ def test_calculate_readability_empty(db):
 
 def test_cluster_articles(nlp_processor, test_user, db):
     """Test article clustering."""
-    from app.models.feed import Article, Feed
     import json
+
+    from app.models.feed import Article, Feed
 
     # Create test feed and articles with embeddings
     feed = Feed(
-        url="https://example.com/rss",
-        title="Test Feed",
-        user_id=test_user.id,
-        is_active=True
+        url="https://example.com/rss", title="Test Feed", user_id=test_user.id, is_active=True
     )
     db.add(feed)
     db.commit()
 
     # Create articles with embeddings
     for i in range(4):
-        embedding = [0.1 + i*0.1, 0.2 + i*0.1, 0.3] * 256
+        embedding = [0.1 + i * 0.1, 0.2 + i * 0.1, 0.3] * 256
         article = Article(
             title=f"Article {i}",
             link=f"https://example.com/article{i}",
             description=f"Description {i}",
             feed_id=feed.id,
-            embedding=json.dumps(embedding)
+            embedding=json.dumps(embedding),
         )
         db.add(article)
     db.commit()
@@ -181,15 +179,13 @@ def test_cluster_articles(nlp_processor, test_user, db):
 
 def test_cluster_articles_insufficient_data(nlp_processor, test_user, db):
     """Test clustering with insufficient data."""
-    from app.models.feed import Article, Feed
     import json
+
+    from app.models.feed import Article, Feed
 
     # Create test feed with only one article
     feed = Feed(
-        url="https://example.com/rss",
-        title="Test Feed",
-        user_id=test_user.id,
-        is_active=True
+        url="https://example.com/rss", title="Test Feed", user_id=test_user.id, is_active=True
     )
     db.add(feed)
     db.commit()
@@ -199,7 +195,7 @@ def test_cluster_articles_insufficient_data(nlp_processor, test_user, db):
         link="https://example.com/article",
         description="Description",
         feed_id=feed.id,
-        embedding=json.dumps([0.1, 0.2, 0.3] * 256)
+        embedding=json.dumps([0.1, 0.2, 0.3] * 256),
     )
     db.add(article)
     db.commit()

@@ -51,7 +51,9 @@ def login(
     db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ) -> dict[str, str]:
     """Login user and return access token."""
-    print(f"[DEBUG] Login attempt - username: {form_data.username}, password length: {len(form_data.password)}")
+    print(
+        f"[DEBUG] Login attempt - username: {form_data.username}, password length: {len(form_data.password)}"
+    )
 
     user = db.query(User).filter(User.email == form_data.username).first()
 

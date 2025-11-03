@@ -1,12 +1,12 @@
 """Feed and Article database models."""
 
+import json as json_lib
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import TypeDecorator
-import json as json_lib
 
 from app.db.base import Base
 
@@ -97,7 +97,9 @@ class UserPreference(Base):
     excluded_topics = Column(JSONEncodedList, default=list)
     preferred_sources = Column(JSONEncodedList, default=list)
     excluded_sources = Column(JSONEncodedList, default=list)
-    excluded_words = Column(JSONEncodedList, default=list)  # Filter out articles containing these words
+    excluded_words = Column(
+        JSONEncodedList, default=list
+    )  # Filter out articles containing these words
 
     # AI recommendation settings
     enable_recommendations = Column(Boolean, default=True)

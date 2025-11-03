@@ -80,9 +80,7 @@ def test_rate_article(client: TestClient, auth_headers, test_feed_with_articles,
     article_id = articles[0].id
 
     # Rate article
-    response = client.post(
-        f"/api/v1/articles/{article_id}/rate?rating=4.5", headers=auth_headers
-    )
+    response = client.post(f"/api/v1/articles/{article_id}/rate?rating=4.5", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     assert data["user_rating"] == 4.5
@@ -94,18 +92,14 @@ def test_rate_article_invalid_rating(client: TestClient, auth_headers, test_feed
     article_id = articles[0].id
 
     # Try invalid rating
-    response = client.post(
-        f"/api/v1/articles/{article_id}/rate?rating=6.0", headers=auth_headers
-    )
+    response = client.post(f"/api/v1/articles/{article_id}/rate?rating=6.0", headers=auth_headers)
     assert response.status_code == 400
 
 
 def test_filter_by_sentiment(client: TestClient, auth_headers, test_feed_with_articles):
     """Test filtering articles by sentiment."""
     # Get positive sentiment articles
-    response = client.get(
-        "/api/v1/articles/?min_sentiment=0.3", headers=auth_headers
-    )
+    response = client.get("/api/v1/articles/?min_sentiment=0.3", headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)

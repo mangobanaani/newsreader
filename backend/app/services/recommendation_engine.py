@@ -113,12 +113,20 @@ class RecommendationEngine:
             article_parts.append(f"Description: {article.description}")
 
         if article.sentiment_score is not None:
-            sentiment_label = "positive" if article.sentiment_score > 0.05 else "negative" if article.sentiment_score < -0.05 else "neutral"
+            sentiment_label = (
+                "positive"
+                if article.sentiment_score > 0.05
+                else "negative" if article.sentiment_score < -0.05 else "neutral"
+            )
             article_parts.append(f"Sentiment: {sentiment_label} ({article.sentiment_score:.2f})")
 
         if article.topics:
             try:
-                topics = json.loads(article.topics) if isinstance(article.topics, str) else article.topics
+                topics = (
+                    json.loads(article.topics)
+                    if isinstance(article.topics, str)
+                    else article.topics
+                )
                 article_parts.append(f"Topics: {', '.join(topics[:5])}")
             except (json.JSONDecodeError, TypeError):
                 pass
@@ -187,7 +195,9 @@ Respond in JSON format:
 
         return "\n".join(context_parts) if context_parts else "No specific preferences set"
 
-    def _fallback_score(self, article: Article, reading_history: list[Article], preferences: UserPreference) -> float:
+    def _fallback_score(
+        self, article: Article, reading_history: list[Article], preferences: UserPreference
+    ) -> float:
         """Fallback scoring using embedding similarity and NLP features."""
         base_score = 0.5
 
@@ -209,13 +219,19 @@ Respond in JSON format:
         # Embedding-based similarity
         if article.embedding and reading_history:
             try:
-                article_embedding = np.array(json.loads(article.embedding) if isinstance(article.embedding, str) else article.embedding)
+                article_embedding = np.array(
+                    json.loads(article.embedding)
+                    if isinstance(article.embedding, str)
+                    else article.embedding
+                )
                 similarities = []
 
                 for hist_article in reading_history:
                     if hist_article.embedding:
                         hist_embedding = np.array(
-                            json.loads(hist_article.embedding) if isinstance(hist_article.embedding, str) else hist_article.embedding
+                            json.loads(hist_article.embedding)
+                            if isinstance(hist_article.embedding, str)
+                            else hist_article.embedding
                         )
                         similarity = float(
                             np.dot(article_embedding, hist_embedding)

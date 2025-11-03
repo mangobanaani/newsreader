@@ -6,11 +6,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.models.feed import Article, Feed
-from app.services.llm_insights import (
-    LLMContentError,
-    LLMFeatureDisabledError,
-    LLMInsightService,
-)
+from app.services.llm_insights import LLMContentError, LLMFeatureDisabledError, LLMInsightService
 
 
 @pytest.fixture

@@ -26,24 +26,24 @@ class RSSFetcher:
             return ""
 
         # Remove script and style tags with their content
-        text = re.sub(r'<script[^>]*>.*?</script>', '', text, flags=re.DOTALL | re.IGNORECASE)
-        text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL | re.IGNORECASE)
+        text = re.sub(r"<script[^>]*>.*?</script>", "", text, flags=re.DOTALL | re.IGNORECASE)
+        text = re.sub(r"<style[^>]*>.*?</style>", "", text, flags=re.DOTALL | re.IGNORECASE)
 
         # Use BeautifulSoup to clean remaining HTML
-        soup = BeautifulSoup(text, 'html.parser')
+        soup = BeautifulSoup(text, "html.parser")
 
         # Remove any remaining script/style tags
-        for script in soup(['script', 'style', 'noscript']):
+        for script in soup(["script", "style", "noscript"]):
             script.decompose()
 
         # Get text and clean up whitespace
-        cleaned = soup.get_text(separator=' ', strip=True)
+        cleaned = soup.get_text(separator=" ", strip=True)
 
         # Remove multiple spaces
-        cleaned = re.sub(r'\s+', ' ', cleaned)
+        cleaned = re.sub(r"\s+", " ", cleaned)
 
         # Remove any remaining HTML entities
-        cleaned = re.sub(r'&[a-zA-Z]+;', ' ', cleaned)
+        cleaned = re.sub(r"&[a-zA-Z]+;", " ", cleaned)
 
         return cleaned.strip()
 
@@ -104,6 +104,7 @@ class RSSFetcher:
             # Automatically process new articles with NLP
             if new_articles:
                 from app.services.nlp_processor import NLPProcessor
+
                 processor = NLPProcessor(self.db)
                 for article in new_articles:
                     try:
@@ -137,6 +138,7 @@ class RSSFetcher:
         if total_new > 0:
             try:
                 from app.services.nlp_processor import NLPProcessor
+
                 processor = NLPProcessor(self.db)
                 processor.cluster_articles(user_id)
             except Exception as e:

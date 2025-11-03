@@ -6,19 +6,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user
+from app.core.config import settings
 from app.db.base import get_db
 from app.models.feed import Article
 from app.models.user import User
 from app.schemas.feed import Article as ArticleSchema
 from app.schemas.feed import ArticleLLMInsights, ArticleWithRecommendation
+from app.services.llm_insights import LLMContentError, LLMFeatureDisabledError, LLMInsightService
 from app.services.nlp_processor import NLPProcessor
 from app.services.recommendation_engine import RecommendationEngine
-from app.services.llm_insights import (
-    LLMContentError,
-    LLMFeatureDisabledError,
-    LLMInsightService,
-)
-from app.core.config import settings
 
 router = APIRouter()
 
@@ -129,7 +125,9 @@ def get_article_llm_insights(
 ) -> ArticleLLMInsights:
     """Get AI-generated insights for a specific article."""
     if not settings.ENABLE_LLM_FEATURES:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="LLM features are disabled")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="LLM features are disabled"
+        )
 
     article = (
         db.query(Article)
@@ -312,10 +310,7 @@ def get_all_topics(
     articles = (
         db.query(Article)
         .join(Article.feed)
-        .filter(
-            Article.feed.has(user_id=current_user.id),
-            Article.topics.isnot(None)
-        )
+        .filter(Article.feed.has(user_id=current_user.id), Article.topics.isnot(None))
         .all()
     )
 
@@ -340,10 +335,7 @@ def get_sentiment_analytics(
     articles = (
         db.query(Article)
         .join(Article.feed)
-        .filter(
-            Article.feed.has(user_id=current_user.id),
-            Article.sentiment_score.isnot(None)
-        )
+        .filter(Article.feed.has(user_id=current_user.id), Article.sentiment_score.isnot(None))
         .all()
     )
 
@@ -353,16 +345,16 @@ def get_sentiment_analytics(
         "neutral": 0,
         "slightly_negative": 0,
         "negative": 0,
-        "total": len(articles)
+        "total": len(articles),
     }
 
     # Daily sentiment trends (last 7 days)
-    from datetime import datetime, timedelta
     from collections import defaultdict
+    from datetime import datetime, timedelta
 
-    daily_sentiment: dict[str, dict[str, int]] = defaultdict(lambda: {
-        "positive": 0, "neutral": 0, "negative": 0
-    })
+    daily_sentiment: dict[str, dict[str, int]] = defaultdict(
+        lambda: {"positive": 0, "neutral": 0, "negative": 0}
+    )
 
     for article in articles:
         score = article.sentiment_score
@@ -412,7 +404,7 @@ def get_topic_trends(
         .filter(
             Article.feed.has(user_id=current_user.id),
             Article.topics.isnot(None),
-            Article.published_date >= cutoff_date
+            Article.published_date >= cutoff_date,
         )
         .all()
     )
@@ -431,11 +423,19 @@ def get_topic_trends(
     # Calculate trending topics
     trending: list[dict[str, str | int]] = []
     for topic, dates in topic_timeline.items():
-        trending.append({
-            "topic": topic,
-            "count": len(dates),
-            "growth": len([d for d in dates if d >= (datetime.utcnow() - timedelta(days=3)).strftime("%Y-%m-%d")])
-        })
+        trending.append(
+            {
+                "topic": topic,
+                "count": len(dates),
+                "growth": len(
+                    [
+                        d
+                        for d in dates
+                        if d >= (datetime.utcnow() - timedelta(days=3)).strftime("%Y-%m-%d")
+                    ]
+                ),
+            }
+        )
 
     # Sort by recent growth
     trending.sort(key=lambda x: x["growth"], reverse=True)
@@ -452,10 +452,7 @@ def get_cluster_analytics(
     articles = (
         db.query(Article)
         .join(Article.feed)
-        .filter(
-            Article.feed.has(user_id=current_user.id),
-            Article.cluster_id.isnot(None)
-        )
+        .filter(Article.feed.has(user_id=current_user.id), Article.cluster_id.isnot(None))
         .all()
     )
 
@@ -487,9 +484,10 @@ def export_articles_csv(
     max_sentiment: float | None = None,
 ):
     """Export articles as CSV."""
-    from fastapi.responses import StreamingResponse
     import csv
     from io import StringIO
+
+    from fastapi.responses import StreamingResponse
 
     # Build query with same filters as list endpoint
     query = db.query(Article).join(Article.feed).filter(Article.feed.has(user_id=current_user.id))
@@ -508,30 +506,44 @@ def export_articles_csv(
     writer = csv.writer(output)
 
     # Header
-    writer.writerow(["ID", "Title", "Link", "Author", "Published Date", "Sentiment Score", "Topics", "Is Read", "Is Bookmarked"])
+    writer.writerow(
+        [
+            "ID",
+            "Title",
+            "Link",
+            "Author",
+            "Published Date",
+            "Sentiment Score",
+            "Topics",
+            "Is Read",
+            "Is Bookmarked",
+        ]
+    )
 
     # Rows
     for article in articles:
         topics_str = "; ".join(article.topics) if article.topics else ""
 
-        writer.writerow([
-            article.id,
-            article.title,
-            article.link,
-            article.author or "",
-            article.published_date.isoformat() if article.published_date else "",
-            article.sentiment_score if article.sentiment_score is not None else "",
-            topics_str,
-            article.is_read,
-            article.is_bookmarked
-        ])
+        writer.writerow(
+            [
+                article.id,
+                article.title,
+                article.link,
+                article.author or "",
+                article.published_date.isoformat() if article.published_date else "",
+                article.sentiment_score if article.sentiment_score is not None else "",
+                topics_str,
+                article.is_read,
+                article.is_bookmarked,
+            ]
+        )
 
     output.seek(0)
 
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=articles.csv"}
+        headers={"Content-Disposition": "attachment; filename=articles.csv"},
     )
 
 
@@ -561,23 +573,27 @@ def export_articles_json(
     # Convert to dict
     articles_data = []
     for article in articles:
-        articles_data.append({
-            "id": article.id,
-            "title": article.title,
-            "link": article.link,
-            "description": article.description,
-            "author": article.author,
-            "published_date": article.published_date.isoformat() if article.published_date else None,
-            "sentiment_score": article.sentiment_score,
-            "topics": article.topics,
-            "is_read": article.is_read,
-            "is_bookmarked": article.is_bookmarked
-        })
+        articles_data.append(
+            {
+                "id": article.id,
+                "title": article.title,
+                "link": article.link,
+                "description": article.description,
+                "author": article.author,
+                "published_date": (
+                    article.published_date.isoformat() if article.published_date else None
+                ),
+                "sentiment_score": article.sentiment_score,
+                "topics": article.topics,
+                "is_read": article.is_read,
+                "is_bookmarked": article.is_bookmarked,
+            }
+        )
 
     json_str = json.dumps({"articles": articles_data, "count": len(articles_data)}, indent=2)
 
     return StreamingResponse(
         iter([json_str]),
         media_type="application/json",
-        headers={"Content-Disposition": "attachment; filename=articles.json"}
+        headers={"Content-Disposition": "attachment; filename=articles.json"},
     )

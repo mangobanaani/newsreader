@@ -59,9 +59,7 @@ def test_update_preferences(client: TestClient, auth_headers, test_preference):
         "preferred_topics": ["politics", "economics"],
         "min_relevance_score": 0.8,
     }
-    response = client.put(
-        "/api/v1/preferences/", json=update_data, headers=auth_headers
-    )
+    response = client.put("/api/v1/preferences/", json=update_data, headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     assert data["preferred_topics"] == ["politics", "economics"]
@@ -73,9 +71,7 @@ def test_update_preferences(client: TestClient, auth_headers, test_preference):
 def test_update_preferences_partial(client: TestClient, auth_headers, test_preference):
     """Test partial update of preferences."""
     update_data = {"enable_recommendations": False}
-    response = client.put(
-        "/api/v1/preferences/", json=update_data, headers=auth_headers
-    )
+    response = client.put("/api/v1/preferences/", json=update_data, headers=auth_headers)
     assert response.status_code == 200
     data = response.json()
     assert data["enable_recommendations"] is False

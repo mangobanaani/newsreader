@@ -8,10 +8,10 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import DBSCAN
 from sklearn.feature_extraction.text import TfidfVectorizer
+from spacy.lang.en import English
 from sqlalchemy.orm import Session
 from textstat import textstat
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from spacy.lang.en import English
 
 from app.core.config import settings
 from app.models.feed import Article
@@ -72,7 +72,7 @@ class NLPProcessor:
                     Article.embedding.is_(None)
                     | Article.readability_score.is_(None)
                     | Article.writing_style.is_(None)
-                )
+                ),
             )
             .all()
         )
@@ -114,7 +114,7 @@ class NLPProcessor:
         return {
             "processed": processed,
             "total": len(articles),
-            "message": f"Successfully processed {processed} out of {len(articles)} articles"
+            "message": f"Successfully processed {processed} out of {len(articles)} articles",
         }
 
     def cluster_articles(self, user_id: int, min_samples: int | None = None) -> int:
@@ -273,14 +273,63 @@ class NLPProcessor:
         """Extract topics from text using TF-IDF and keyword extraction."""
         # Common technical terms and protocols to filter out
         blacklist_terms = {
-            'http', 'https', 'www', 'com', 'org', 'net', 'html', 'xml', 'json',
-            'api', 'url', 'link', 'href', 'src', 'img', 'div', 'span', 'class',
-            'read', 'more', 'click', 'here', 'article', 'post', 'page', 'site',
-            'website', 'blog', 'news', 'today', 'said', 'says', 'according',
-            'report', 'reports', 'reported', 'story', 'stories', 'comment',
-            'comments', 'share', 'tweet', 'follow', 'subscribe', 'newsletter',
-            'theguardian', 'nytimes', 'bbc', 'cnn', 'reuters', 'bloomberg',  # News sources
-            'jpeg', 'jpg', 'png', 'gif', 'pdf', 'svg',  # File formats
+            "http",
+            "https",
+            "www",
+            "com",
+            "org",
+            "net",
+            "html",
+            "xml",
+            "json",
+            "api",
+            "url",
+            "link",
+            "href",
+            "src",
+            "img",
+            "div",
+            "span",
+            "class",
+            "read",
+            "more",
+            "click",
+            "here",
+            "article",
+            "post",
+            "page",
+            "site",
+            "website",
+            "blog",
+            "news",
+            "today",
+            "said",
+            "says",
+            "according",
+            "report",
+            "reports",
+            "reported",
+            "story",
+            "stories",
+            "comment",
+            "comments",
+            "share",
+            "tweet",
+            "follow",
+            "subscribe",
+            "newsletter",
+            "theguardian",
+            "nytimes",
+            "bbc",
+            "cnn",
+            "reuters",
+            "bloomberg",  # News sources
+            "jpeg",
+            "jpg",
+            "png",
+            "gif",
+            "pdf",
+            "svg",  # File formats
         }
 
         # Use TF-IDF for better keyword extraction
@@ -288,11 +337,11 @@ class NLPProcessor:
             # Create TF-IDF vectorizer with custom parameters
             vectorizer = TfidfVectorizer(
                 max_features=20,
-                stop_words='english',
+                stop_words="english",
                 ngram_range=(1, 2),  # Include both unigrams and bigrams
                 min_df=1,
                 lowercase=True,
-                token_pattern=r'(?u)\b[a-zA-Z][a-zA-Z]+\b'  # Only words, no numbers
+                token_pattern=r"(?u)\b[a-zA-Z][a-zA-Z]+\b",  # Only words, no numbers
             )
 
             # Fit and transform the text
@@ -305,7 +354,8 @@ class NLPProcessor:
             # Get top keywords by TF-IDF score, filter blacklist
             top_indices = tfidf_scores.argsort()[-15:][::-1]
             tfidf_topics = [
-                feature_names[i] for i in top_indices
+                feature_names[i]
+                for i in top_indices
                 if tfidf_scores[i] > 0 and feature_names[i] not in blacklist_terms
             ][:10]
 
@@ -318,12 +368,15 @@ class NLPProcessor:
 
         # Combine TF-IDF topics and categories, remove duplicates and blacklisted
         all_topics = [
-            topic for topic in list(set(tfidf_topics + categories))
+            topic
+            for topic in list(set(tfidf_topics + categories))
             if topic not in blacklist_terms
-            and not any(char in topic for char in ['/', '.', '@', '#'])  # Filter URL/email patterns
-            and not any(word in topic.lower() for word in ['http', 'https', 'www', 'url', 'link'])  # Filter URL-related terms
+            and not any(char in topic for char in ["/", ".", "@", "#"])  # Filter URL/email patterns
+            and not any(
+                word in topic.lower() for word in ["http", "https", "www", "url", "link"]
+            )  # Filter URL-related terms
             and len(topic) > 2  # Filter very short terms
-            and not topic.replace(' ', '').isdigit()  # Filter pure numbers
+            and not topic.replace(" ", "").isdigit()  # Filter pure numbers
         ]
 
         return all_topics[:15]  # Return top 15 topics
@@ -332,36 +385,159 @@ class NLPProcessor:
         """Fallback topic extraction using word frequency."""
         # Common stop words to filter out
         stop_words = {
-            'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i',
-            'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
-            'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her', 'she',
-            'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their',
-            'what', 'so', 'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go',
-            'me', 'when', 'make', 'can', 'like', 'time', 'no', 'just', 'him', 'know',
-            'take', 'people', 'into', 'year', 'your', 'good', 'some', 'could', 'them',
-            'see', 'other', 'than', 'then', 'now', 'look', 'only', 'come', 'its', 'over',
-            'think', 'also', 'back', 'after', 'use', 'two', 'how', 'our', 'work',
-            'first', 'well', 'way', 'even', 'new', 'want', 'because', 'any', 'these',
-            'give', 'day', 'most', 'us', 'is', 'was', 'are', 'been', 'has', 'had',
-            'were', 'said', 'did', 'having', 'may', 'such', 'being', 'here', 'should',
+            "the",
+            "be",
+            "to",
+            "of",
+            "and",
+            "a",
+            "in",
+            "that",
+            "have",
+            "i",
+            "it",
+            "for",
+            "not",
+            "on",
+            "with",
+            "he",
+            "as",
+            "you",
+            "do",
+            "at",
+            "this",
+            "but",
+            "his",
+            "by",
+            "from",
+            "they",
+            "we",
+            "say",
+            "her",
+            "she",
+            "or",
+            "an",
+            "will",
+            "my",
+            "one",
+            "all",
+            "would",
+            "there",
+            "their",
+            "what",
+            "so",
+            "up",
+            "out",
+            "if",
+            "about",
+            "who",
+            "get",
+            "which",
+            "go",
+            "me",
+            "when",
+            "make",
+            "can",
+            "like",
+            "time",
+            "no",
+            "just",
+            "him",
+            "know",
+            "take",
+            "people",
+            "into",
+            "year",
+            "your",
+            "good",
+            "some",
+            "could",
+            "them",
+            "see",
+            "other",
+            "than",
+            "then",
+            "now",
+            "look",
+            "only",
+            "come",
+            "its",
+            "over",
+            "think",
+            "also",
+            "back",
+            "after",
+            "use",
+            "two",
+            "how",
+            "our",
+            "work",
+            "first",
+            "well",
+            "way",
+            "even",
+            "new",
+            "want",
+            "because",
+            "any",
+            "these",
+            "give",
+            "day",
+            "most",
+            "us",
+            "is",
+            "was",
+            "are",
+            "been",
+            "has",
+            "had",
+            "were",
+            "said",
+            "did",
+            "having",
+            "may",
+            "such",
+            "being",
+            "here",
+            "should",
             # Technical terms
-            'http', 'https', 'www', 'com', 'org', 'net', 'html', 'xml', 'json',
-            'read', 'more', 'click', 'here', 'article', 'post', 'page', 'site',
-            'website', 'blog', 'news', 'today', 'according', 'report', 'story'
+            "http",
+            "https",
+            "www",
+            "com",
+            "org",
+            "net",
+            "html",
+            "xml",
+            "json",
+            "read",
+            "more",
+            "click",
+            "here",
+            "article",
+            "post",
+            "page",
+            "site",
+            "website",
+            "blog",
+            "news",
+            "today",
+            "according",
+            "report",
+            "story",
         }
 
         # Remove punctuation and convert to lowercase
-        text = re.sub(r'[^\w\s]', ' ', text.lower())
+        text = re.sub(r"[^\w\s]", " ", text.lower())
 
         # Split into words and filter
         words = text.split()
 
         # Filter words: remove stop words, short words, numbers
         filtered_words = [
-            word for word in words
-            if word not in stop_words
-            and len(word) > 3
-            and not word.isdigit()
+            word
+            for word in words
+            if word not in stop_words and len(word) > 3 and not word.isdigit()
         ]
 
         # Get most common words as topics
@@ -374,24 +550,130 @@ class NLPProcessor:
 
         # Define category keywords
         category_keywords = {
-            'technology': ['tech', 'software', 'hardware', 'computer', 'digital', 'internet',
-                          'online', 'cyber', 'data', 'cloud', 'app', 'smartphone', 'device'],
-            'ai': ['artificial intelligence', 'machine learning', 'neural', 'deep learning',
-                   'chatgpt', 'openai', 'anthropic', 'claude', 'gpt', 'model', 'llm', 'transformer'],
-            'business': ['business', 'company', 'corporate', 'market', 'stock', 'investment',
-                        'finance', 'economy', 'trade', 'industry', 'startup', 'enterprise'],
-            'politics': ['politics', 'government', 'election', 'president', 'congress', 'senate',
-                        'policy', 'legislation', 'political', 'democrat', 'republican', 'vote'],
-            'science': ['science', 'research', 'study', 'scientist', 'discovery', 'experiment',
-                       'university', 'journal', 'academic', 'laboratory'],
-            'health': ['health', 'medical', 'disease', 'patient', 'doctor', 'hospital', 'medicine',
-                      'treatment', 'vaccine', 'virus', 'healthcare', 'wellness'],
-            'sports': ['sports', 'game', 'player', 'team', 'coach', 'league', 'championship',
-                      'football', 'basketball', 'baseball', 'soccer', 'tennis'],
-            'entertainment': ['movie', 'film', 'music', 'actor', 'celebrity', 'entertainment',
-                            'hollywood', 'concert', 'album', 'show', 'series', 'netflix'],
-            'security': ['security', 'cybersecurity', 'breach', 'hack', 'vulnerability', 'attack',
-                        'malware', 'ransomware', 'encryption', 'privacy', 'password'],
+            "technology": [
+                "tech",
+                "software",
+                "hardware",
+                "computer",
+                "digital",
+                "internet",
+                "online",
+                "cyber",
+                "data",
+                "cloud",
+                "app",
+                "smartphone",
+                "device",
+            ],
+            "ai": [
+                "artificial intelligence",
+                "machine learning",
+                "neural",
+                "deep learning",
+                "chatgpt",
+                "openai",
+                "anthropic",
+                "claude",
+                "gpt",
+                "model",
+                "llm",
+                "transformer",
+            ],
+            "business": [
+                "business",
+                "company",
+                "corporate",
+                "market",
+                "stock",
+                "investment",
+                "finance",
+                "economy",
+                "trade",
+                "industry",
+                "startup",
+                "enterprise",
+            ],
+            "politics": [
+                "politics",
+                "government",
+                "election",
+                "president",
+                "congress",
+                "senate",
+                "policy",
+                "legislation",
+                "political",
+                "democrat",
+                "republican",
+                "vote",
+            ],
+            "science": [
+                "science",
+                "research",
+                "study",
+                "scientist",
+                "discovery",
+                "experiment",
+                "university",
+                "journal",
+                "academic",
+                "laboratory",
+            ],
+            "health": [
+                "health",
+                "medical",
+                "disease",
+                "patient",
+                "doctor",
+                "hospital",
+                "medicine",
+                "treatment",
+                "vaccine",
+                "virus",
+                "healthcare",
+                "wellness",
+            ],
+            "sports": [
+                "sports",
+                "game",
+                "player",
+                "team",
+                "coach",
+                "league",
+                "championship",
+                "football",
+                "basketball",
+                "baseball",
+                "soccer",
+                "tennis",
+            ],
+            "entertainment": [
+                "movie",
+                "film",
+                "music",
+                "actor",
+                "celebrity",
+                "entertainment",
+                "hollywood",
+                "concert",
+                "album",
+                "show",
+                "series",
+                "netflix",
+            ],
+            "security": [
+                "security",
+                "cybersecurity",
+                "breach",
+                "hack",
+                "vulnerability",
+                "attack",
+                "malware",
+                "ransomware",
+                "encryption",
+                "privacy",
+                "password",
+            ],
         }
 
         text_lower = text.lower()
@@ -407,4 +689,4 @@ class NLPProcessor:
         # VADER returns a dictionary with neg, neu, pos, and compound scores
         # compound score is a normalized score between -1 (most negative) and 1 (most positive)
         scores = self.sentiment_analyzer.polarity_scores(text)
-        return scores['compound']
+        return scores["compound"]
