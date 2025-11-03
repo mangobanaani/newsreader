@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 sys.path.insert(0, '/Users/pekka/Documents/newsreader/backend')
 
-from jose import jwt
+import jwt
 from app.core.config import settings
 
 def generate_token(user_id: int) -> str:
