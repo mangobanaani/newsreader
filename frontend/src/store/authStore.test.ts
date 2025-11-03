@@ -31,6 +31,7 @@ describe('authStore', () => {
       id: 1,
       email: 'test@example.com',
       is_active: true,
+      is_superuser: false,
     };
 
     const { setUser } = useAuthStore.getState();
@@ -46,6 +47,7 @@ describe('authStore', () => {
       id: 1,
       email: 'test@example.com',
       is_active: true,
+      is_superuser: false,
     };
 
     const { setUser } = useAuthStore.getState();
@@ -65,6 +67,7 @@ describe('authStore', () => {
       id: 1,
       email: 'test@example.com',
       is_active: true,
+      is_superuser: false,
     };
 
     const { setUser, logout } = useAuthStore.getState();
@@ -87,12 +90,14 @@ describe('authStore', () => {
       id: 1,
       email: 'user1@example.com',
       is_active: true,
+      is_superuser: false,
     };
 
     const user2: User = {
       id: 2,
       email: 'user2@example.com',
       is_active: true,
+      is_superuser: false,
     };
 
     setUser(user1);

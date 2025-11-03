@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ArticleCard } from './ArticleCard';
-import { Article } from '../types';
+import type { Article } from '../types';
 
 const mockArticle: Article = {
   id: 1,
@@ -10,9 +10,9 @@ const mockArticle: Article = {
   description: 'This is a test article description',
   content: 'Full article content here',
   author: 'Test Author',
-  published_date: new Date('2025-01-01T12:00:00Z'),
+  published_date: '2025-01-01T12:00:00Z',
   feed_id: 1,
-  created_at: new Date('2025-01-01T12:00:00Z'),
+  created_at: '2025-01-01T12:00:00Z',
   cluster_id: null,
   sentiment_score: 0.5,
   topics: ['technology', 'ai'],

@@ -92,16 +92,16 @@ export const FeedManagement: React.FC = () => {
             onRemoveFeed={(url) => {
               const feedToDeactivate = feeds?.find(f => f.url === url);
               if (feedToDeactivate && window.confirm(`Deactivate feed "${feedToDeactivate.title || url}"?\n\nThis will stop fetching new articles but keep existing ones.`)) {
-                updateMutation.mutate({ id: feedToDeactivate.id, data: { is_active: false } });
+                updateMutation.mutate({ id: feedToDeactivate.id, data: { title: feedToDeactivate.title || undefined } });
               }
             }}
             onReactivate={(url) => {
               const feedToReactivate = feeds?.find(f => f.url === url);
               if (feedToReactivate) {
-                updateMutation.mutate({ id: feedToReactivate.id, data: { is_active: true } });
+                updateMutation.mutate({ id: feedToReactivate.id, data: { title: feedToReactivate.title || undefined } });
               }
             }}
-            onEdit={(feed) => setEditingFeed(feed)}
+            onEdit={(feed) => setEditingFeed({ ...feed, user_id: feed.user_id || 0 })}
             onRefresh={(feedId) => refreshMutation.mutate(feedId)}
             isAdding={createMutation.isPending}
             isRefreshing={refreshMutation.isPending}

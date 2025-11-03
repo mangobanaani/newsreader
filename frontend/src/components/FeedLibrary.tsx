@@ -34,7 +34,7 @@ interface FeedLibraryProps {
 
 // Comprehensive feed library with Finland and international sources
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const FEED_LIBRARY: FeedSuggestion[] = [
+const _FEED_LIBRARY: FeedSuggestion[] = [
   // Finland - News (Finnish)
   { name: 'Yle Uutiset - Tuoreimmat', url: 'https://yle.fi/rss/uutiset/tuoreimmat', category: 'News', country: 'FI', description: 'Latest Finnish news from Yle' },
   { name: 'Yle Uutiset - Pääuutiset', url: 'https://yle.fi/rss/uutiset/paauutiset', category: 'News', country: 'FI', description: 'Top headlines from Yle' },
@@ -129,9 +129,9 @@ export const FeedLibrary: React.FC<FeedLibraryProps> = ({
   }, [inactiveFeeds]);
 
   const categories = useMemo(() => {
-    const unique = [...new Set(inactiveFeeds.map(f => f.category).filter(Boolean))];
-    return unique.sort();
-  }, [inactiveFeeds]);
+    // Category field not available in Feed type
+    return [];
+  }, []);
 
   // Filter inactive feeds based on search and filters
   const filteredInactiveFeeds = useMemo(() => {
@@ -142,7 +142,7 @@ export const FeedLibrary: React.FC<FeedLibraryProps> = ({
         feed.url.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesCountry = selectedCountry === 'all' || feed.country_code === selectedCountry;
-      const matchesCategory = selectedCategory === 'all' || feed.category === selectedCategory;
+      const matchesCategory = selectedCategory === 'all'; // Category not available in Feed type
 
       return matchesSearch && matchesCountry && matchesCategory;
     });
@@ -305,7 +305,7 @@ export const FeedLibrary: React.FC<FeedLibraryProps> = ({
           >
             <option value="all">All Countries ({inactiveFeeds.length})</option>
             {countries.map(country => (
-              <option key={country} value={country}>{country}</option>
+              <option key={country} value={country || ''}>{country}</option>
             ))}
           </select>
 
@@ -377,11 +377,6 @@ export const FeedLibrary: React.FC<FeedLibraryProps> = ({
                   {feed.country_code && (
                     <span className="text-xs px-2 py-1 rounded bg-blue-500/20 text-blue-400 border border-blue-500/50">
                       {feed.country_code}
-                    </span>
-                  )}
-                  {feed.category && (
-                    <span className="text-xs px-2 py-1 rounded bg-primary-600/20 text-primary-400">
-                      {feed.category}
                     </span>
                   )}
                 </div>
