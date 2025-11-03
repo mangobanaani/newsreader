@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: newsreader
+          POSTGRES_PASSWORD: newsreader
+          POSTGRES_DB: newsreader_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements*.txt') }}
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install --upgrade pip
+        pip install -r requirements.txt -r requirements-dev.txt
+
+    - name: Run linters
+      run: |
+        cd backend
+        black --check app tests
+        isort --check-only app tests
+        flake8 app tests
+        mypy app
+
+    - name: Run tests
+      env:
+        DATABASE_URL: postgresql://newsreader:newsreader@localhost:5432/newsreader_test
+        SECRET_KEY: test-secret-key
+      run: |
+        cd backend
+        pytest -v --cov=app --cov-report=xml
+
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+
+  frontend-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Cache Node dependencies
+      uses: actions/cache@v3
+      with:
+        path: frontend/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Run linter
+      run: |
+        cd frontend
+        npm run lint
+
+    - name: Type check
+      run: |
+        cd frontend
+        npm run type-check
+
+    - name: Build
+      run: |
+        cd frontend
+        npm run build
