@@ -9,7 +9,7 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt<4.0.0  # Compatibility with passlib
 python-multipart==0.0.6
-authlib==1.3.0
+authlib==1.6.5
 feedparser==6.0.11
 aiohttp==3.9.1
 redis==5.0.1
