@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import type { Feed } from '../types';
 
 interface FeedSuggestion {
   name: string;
@@ -7,16 +8,6 @@ interface FeedSuggestion {
   category: string;
   country: string;
   description?: string;
-}
-
-interface Feed {
-  id: number;
-  url: string;
-  title: string | null;
-  description: string | null;
-  is_active: boolean;
-  last_fetched: string | null;
-  country_code: string | null;
 }
 
 interface FeedLibraryProps {
