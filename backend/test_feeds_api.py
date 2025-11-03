@@ -2,13 +2,16 @@
 """Test feeds API and generate fresh token."""
 
 import sys
-import requests
 from datetime import datetime, timedelta
 
-sys.path.insert(0, '/Users/pekka/Documents/newsreader/backend')
+import requests
+
+sys.path.insert(0, "/Users/pekka/Documents/newsreader/backend")
 
 import jwt
+
 from app.core.config import settings
+
 
 def generate_token(user_id: int) -> str:
     """Generate a JWT token for testing."""
@@ -16,6 +19,7 @@ def generate_token(user_id: int) -> str:
     to_encode = {"exp": expire, "sub": str(user_id)}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
+
 
 def test_feeds_api():
     """Test the feeds API endpoint."""
@@ -44,6 +48,7 @@ def test_feeds_api():
     except requests.exceptions.ConnectionError:
         print("✗ Cannot connect to backend at http://localhost:8000")
         print("  Make sure the backend is running (cd backend && make run-backend)")
+
 
 if __name__ == "__main__":
     test_feeds_api()
