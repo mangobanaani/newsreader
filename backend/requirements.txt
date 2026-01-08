@@ -10,7 +10,7 @@ PyJWT==2.10.1
 passlib[bcrypt]==1.7.4
 bcrypt<4.0.0  # Compatibility with passlib
 python-multipart==0.0.20
-authlib==1.6.5
+authlib==1.6.6
 feedparser==6.0.11
 aiohttp==3.13.2
 redis==5.0.1
