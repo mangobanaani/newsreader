@@ -255,9 +255,9 @@ class AdvancedNLPProcessor:
 
         except Exception as e:
             metadata.processing_status = "failed"
-            if metadata.processing_errors is None:
-                metadata.processing_errors = []
-            metadata.processing_errors.append(str(e))
+            errors = list(metadata.processing_errors or [])
+            errors.append(str(e))
+            metadata.processing_errors = errors
 
         self.db.commit()
         return metadata
