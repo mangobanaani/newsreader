@@ -3,6 +3,7 @@
 import asyncio
 import json
 from typing import Any
+from urllib.parse import quote_plus
 
 import anthropic
 import httpx
@@ -175,7 +176,7 @@ Respond in JSON:
         try:
             async with httpx.AsyncClient() as client:
                 # Simplified search - in production use proper APIs
-                search_url = f"https://api.duckduckgo.com/?q={claim}&format=json"
+                search_url = f"https://api.duckduckgo.com/?q={quote_plus(claim)}&format=json"
                 response = await client.get(search_url, timeout=10.0)
                 if response.status_code == 200:
                     data = response.json()
