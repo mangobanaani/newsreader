@@ -41,7 +41,7 @@ class ScraperDestination(Base):
 
     # OCR settings
     ocr_enabled = Column(Boolean, default=False)
-    ocr_languages = Column(JSON, default=["eng"])  # Tesseract language codes
+    ocr_languages = Column(JSON, default=lambda: ["eng"])  # Tesseract language codes
     ocr_preprocessing = Column(JSON, default=dict)  # Image preprocessing options
 
     # Extraction rules
