@@ -3,6 +3,7 @@
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user
@@ -58,9 +59,9 @@ def list_articles(
     prefs = db.query(UserPreference).filter(UserPreference.user_id == current_user.id).first()
     if prefs and prefs.excluded_words:
         for word in prefs.excluded_words:
-            query = query.filter(
-                ~(Article.title + " " + (Article.description or "")).ilike(f"%{word}%")
-            )
+            escaped = word.replace("%", r"\%").replace("_", r"\_")
+            combined = Article.title + " " + func.coalesce(Article.description, "")
+            query = query.filter(~combined.ilike(f"%{escaped}%"))
 
     # Sorting
     if sort_by == "sentiment":
