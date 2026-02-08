@@ -26,6 +26,11 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 }
 
+function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  return isAuthenticated ? <Navigate to="/" /> : <>{children}</>;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -33,7 +38,7 @@ function App() {
         <BrowserRouter>
           <CommandPaletteProvider>
             <Routes>
-              <Route path="/login" element={<Login />} />
+              <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route
                 path="/"
@@ -83,6 +88,7 @@ function App() {
                   </PrivateRoute>
                 }
               />
+              <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </CommandPaletteProvider>
         </BrowserRouter>
