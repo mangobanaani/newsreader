@@ -28,6 +28,8 @@ class UserInDB(UserBase):
     id: int
     is_active: bool
     is_superuser: bool
+    oauth_provider: str | None = None
+    picture: str | None = None
 
     model_config = {"from_attributes": True}
 
