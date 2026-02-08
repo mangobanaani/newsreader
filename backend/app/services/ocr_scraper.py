@@ -42,9 +42,9 @@ class OCRScraper:
 
         except Exception as e:
             content.processing_status = "failed"
-            if content.processing_errors is None:
-                content.processing_errors = []
-            content.processing_errors.append(str(e))
+            errors = list(content.processing_errors or [])
+            errors.append(str(e))
+            content.processing_errors = errors
 
         self.db.commit()
         return content
@@ -102,9 +102,9 @@ class OCRScraper:
             content.content_hash = hashlib.sha256(content.content_text.encode()).hexdigest()
 
         except ImportError:
-            if content.processing_errors is None:
-                content.processing_errors = []
-            content.processing_errors.append("pypdf not installed - cannot extract PDF text")
+            errors = list(content.processing_errors or [])
+            errors.append("pypdf not installed - cannot extract PDF text")
+            content.processing_errors = errors
 
     async def _scrape_webpage(
         self, destination: ScraperDestination, content: ScrapedContent
@@ -162,9 +162,9 @@ class OCRScraper:
             content.content_hash = hashlib.sha256((content.content_text or "").encode()).hexdigest()
 
         except ImportError:
-            if content.processing_errors is None:
-                content.processing_errors = []
-            content.processing_errors.append("BeautifulSoup not installed - cannot parse HTML")
+            errors = list(content.processing_errors or [])
+            errors.append("BeautifulSoup not installed - cannot parse HTML")
+            content.processing_errors = errors
 
     async def _scrape_screenshot(
         self, destination: ScraperDestination, content: ScrapedContent
@@ -195,9 +195,9 @@ class OCRScraper:
                     content.content_text = ocr_result["text"]
 
         except ImportError:
-            if content.processing_errors is None:
-                content.processing_errors = []
-            content.processing_errors.append("Playwright not installed - cannot take screenshots")
+            errors = list(content.processing_errors or [])
+            errors.append("Playwright not installed - cannot take screenshots")
+            content.processing_errors = errors
 
     def _preprocess_image(self, image: Image.Image, options: dict[str, Any]) -> Image.Image:
         """Preprocess image for better OCR results."""
