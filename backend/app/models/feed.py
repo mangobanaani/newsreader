@@ -58,21 +58,22 @@ class Feed(Base):
     is_library = Column(Boolean, default=False)  # Whether this is a library feed
     last_fetched = Column(DateTime, nullable=True)
     is_active = Column(Boolean, default=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     owner = relationship("User", back_populates="feeds")
-    articles = relationship("Article", back_populates="feed")
+    articles = relationship("Article", back_populates="feed", cascade="all, delete-orphan")
 
 
 class Article(Base):
     """Article model."""
 
     __tablename__ = "articles"
+    __table_args__ = (UniqueConstraint("link", "feed_id", name="uq_article_link_feed"),)
 
     id = Column(Integer, primary_key=True, index=True)
-    feed_id = Column(Integer, ForeignKey("feeds.id"), nullable=False)
+    feed_id = Column(Integer, ForeignKey("feeds.id"), nullable=False, index=True)
     title = Column(String, nullable=False)
-    link = Column(String, unique=True, index=True, nullable=False)
+    link = Column(String, index=True, nullable=False)
     description = Column(Text, nullable=True)
     content = Column(Text, nullable=True)
     author = Column(String, nullable=True)

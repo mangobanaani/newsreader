@@ -76,8 +76,15 @@ class RSSFetcher:
             # Process articles
             new_articles = []
             for entry in feed_data["entries"]:
-                # Check if article already exists
-                existing = self.db.query(Article).filter(Article.link == entry.get("link")).first()
+                # Check if article already exists for this feed
+                link = entry.get("link", "").strip()
+                if not link:
+                    continue
+                existing = (
+                    self.db.query(Article)
+                    .filter(Article.link == link, Article.feed_id == feed.id)
+                    .first()
+                )
 
                 if not existing:
                     # Clean HTML from description and content
@@ -88,8 +95,8 @@ class RSSFetcher:
 
                     article = Article(
                         feed_id=feed.id,
-                        title=entry.get("title", ""),
-                        link=entry.get("link", ""),
+                        title=entry.get("title", "Untitled"),
+                        link=link,
                         description=description,
                         content=content,
                         author=entry.get("author", ""),

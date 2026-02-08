@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS feeds (
 	FOREIGN KEY(user_id) REFERENCES users (id)
 );
 CREATE INDEX IF NOT EXISTS ix_feeds_url ON feeds (url);
+CREATE INDEX IF NOT EXISTS ix_feeds_user_id ON feeds (user_id);
 
 CREATE TABLE IF NOT EXISTS prompt_templates (
 	id SERIAL NOT NULL,
@@ -145,9 +146,11 @@ CREATE TABLE IF NOT EXISTS articles (
 	is_bookmarked BOOLEAN DEFAULT FALSE,
 	user_rating FLOAT,
 	PRIMARY KEY (id),
-	FOREIGN KEY(feed_id) REFERENCES feeds (id)
+	CONSTRAINT uq_article_link_feed UNIQUE (link, feed_id),
+	FOREIGN KEY(feed_id) REFERENCES feeds (id) ON DELETE CASCADE
 );
-CREATE UNIQUE INDEX IF NOT EXISTS ix_articles_link ON articles (link);
+CREATE INDEX IF NOT EXISTS ix_articles_link ON articles (link);
+CREATE INDEX IF NOT EXISTS ix_articles_feed_id ON articles (feed_id);
 
 CREATE TABLE IF NOT EXISTS scraped_content (
 	id SERIAL NOT NULL,
