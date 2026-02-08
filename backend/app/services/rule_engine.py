@@ -103,15 +103,16 @@ class RuleEngine:
                     results["executed"].append(f"Set priority to {action_value}")
 
                 elif action_type == "add_tag":
-                    if article.topics is None:
-                        article.topics = []
-                    if action_value and action_value not in article.topics:
-                        article.topics.append(action_value)
+                    current = list(article.topics or [])
+                    if action_value and action_value not in current:
+                        current.append(action_value)
+                        article.topics = current
                     results["executed"].append(f"Added tag: {action_value}")
 
                 elif action_type == "remove_tag":
                     if article.topics and action_value in article.topics:
-                        article.topics.remove(action_value)
+                        current = [t for t in article.topics if t != action_value]
+                        article.topics = current
                     results["executed"].append(f"Removed tag: {action_value}")
 
                 elif action_type == "mark_read":
@@ -119,11 +120,10 @@ class RuleEngine:
                     results["executed"].append("Marked as read")
 
                 elif action_type == "categorize":
-                    # Could add category field or use tags
-                    if article.topics is None:
-                        article.topics = []
+                    current = list(article.topics or [])
                     if action_value:
-                        article.topics.append(f"category:{action_value}")
+                        current.append(f"category:{action_value}")
+                        article.topics = current
                     results["executed"].append(f"Categorized as: {action_value}")
 
                 else:
