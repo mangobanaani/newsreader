@@ -30,8 +30,12 @@ class ApiClient {
       (response) => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
-          localStorage.removeItem('access_token');
-          window.location.href = '/login';
+          // Don't redirect on login failures - let the login page handle its own errors
+          const requestUrl = error.config?.url || '';
+          if (!requestUrl.includes('/auth/login')) {
+            localStorage.removeItem('access_token');
+            window.location.href = '/login';
+          }
         }
         return Promise.reject(error);
       }
@@ -44,3 +48,4 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient().getInstance();
+export { API_URL };

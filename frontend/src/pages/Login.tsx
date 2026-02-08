@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
@@ -13,8 +13,14 @@ export const Login: React.FC = () => {
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
-    onSuccess: () => {
-      setUser({ id: 0, email, is_active: true, is_superuser: false });
+    onSuccess: async () => {
+      try {
+        const user = await authApi.me();
+        setUser(user);
+      } catch {
+        // Fallback: set minimal user from form input
+        setUser({ id: 0, email, is_active: true, is_superuser: false });
+      }
       navigate('/');
     },
     onError: () => {
@@ -118,15 +124,6 @@ export const Login: React.FC = () => {
           </svg>
           <span className="text-dark-700 font-medium">Continue with Google</span>
         </a>
-
-        <div className="mt-6 text-center">
-          <p className="text-dark-500 text-sm">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-primary-500 hover:text-primary-400">
-              Sign up
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );

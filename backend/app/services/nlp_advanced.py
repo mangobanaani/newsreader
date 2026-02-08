@@ -1,6 +1,7 @@
 """Advanced NLP tooling for article analysis."""
 
 import re
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
@@ -250,7 +251,7 @@ class AdvancedNLPProcessor:
                 metadata.main_content = self.clean_content(article.content)
 
             metadata.processing_status = "completed"
-            metadata.processed_at = None  # Set via datetime.utcnow in model
+            metadata.processed_at = datetime.utcnow()
 
         except Exception as e:
             metadata.processing_status = "failed"

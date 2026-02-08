@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { authApi } from '../api/auth';
 
 export const AuthCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -14,11 +15,15 @@ export const AuthCallback: React.FC = () => {
       // Store the token
       localStorage.setItem('access_token', token);
 
-      // Set a placeholder user (the actual user data will be fetched by the app)
-      setUser({ id: 0, email: '', is_active: true, is_superuser: false });
-
-      // Redirect to home page
-      navigate('/');
+      // Fetch real user data from the backend
+      authApi.me().then((user) => {
+        setUser(user);
+        navigate('/');
+      }).catch(() => {
+        // Fallback if /me endpoint fails
+        setUser({ id: 0, email: '', is_active: true, is_superuser: false });
+        navigate('/');
+      });
     } else {
       // No token, redirect to login with error
       navigate('/login?error=oauth_failed');

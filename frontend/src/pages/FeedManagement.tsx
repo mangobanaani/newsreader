@@ -23,7 +23,7 @@ export const FeedManagement: React.FC = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<FeedCreate> }) => feedsApi.update(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Partial<FeedCreate> & { is_active?: boolean } }) => feedsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feeds'] });
       setEditingFeed(null);
@@ -92,13 +92,13 @@ export const FeedManagement: React.FC = () => {
             onRemoveFeed={(url) => {
               const feedToDeactivate = feeds?.find(f => f.url === url);
               if (feedToDeactivate && window.confirm(`Deactivate feed "${feedToDeactivate.title || url}"?\n\nThis will stop fetching new articles but keep existing ones.`)) {
-                updateMutation.mutate({ id: feedToDeactivate.id, data: { title: feedToDeactivate.title || undefined } });
+                updateMutation.mutate({ id: feedToDeactivate.id, data: { is_active: false } });
               }
             }}
             onReactivate={(url) => {
               const feedToReactivate = feeds?.find(f => f.url === url);
               if (feedToReactivate) {
-                updateMutation.mutate({ id: feedToReactivate.id, data: { title: feedToReactivate.title || undefined } });
+                updateMutation.mutate({ id: feedToReactivate.id, data: { is_active: true } });
               }
             }}
             onEdit={(feed) => setEditingFeed({ ...feed, user_id: feed.user_id ?? 0 })}

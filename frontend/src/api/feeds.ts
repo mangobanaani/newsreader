@@ -17,7 +17,7 @@ export const feedsApi = {
     return response.data;
   },
 
-  update: async (id: number, data: Partial<FeedCreate>): Promise<Feed> => {
+  update: async (id: number, data: Partial<FeedCreate> & { is_active?: boolean }): Promise<Feed> => {
     const response = await apiClient.put<Feed>(`/feeds/${id}`, data);
     return response.data;
   },

@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient, API_URL } from './client';
 import type { Article, ArticleLLMInsights, ArticleWithRecommendation } from '../types';
 
 export const articlesApi = {
@@ -113,7 +113,10 @@ export const articlesApi = {
     if (params?.min_sentiment !== undefined) queryParams.append('min_sentiment', params.min_sentiment.toString());
     if (params?.max_sentiment !== undefined) queryParams.append('max_sentiment', params.max_sentiment.toString());
 
-    return `/articles/export/csv?${queryParams.toString()}`;
+    const token = localStorage.getItem('access_token');
+    if (token) queryParams.append('token', token);
+
+    return `${API_URL}/api/v1/articles/export/csv?${queryParams.toString()}`;
   },
 
   exportJson: (params?: {
@@ -126,6 +129,9 @@ export const articlesApi = {
     if (params?.min_sentiment !== undefined) queryParams.append('min_sentiment', params.min_sentiment.toString());
     if (params?.max_sentiment !== undefined) queryParams.append('max_sentiment', params.max_sentiment.toString());
 
-    return `/articles/export/json?${queryParams.toString()}`;
+    const token = localStorage.getItem('access_token');
+    if (token) queryParams.append('token', token);
+
+    return `${API_URL}/api/v1/articles/export/json?${queryParams.toString()}`;
   },
 };

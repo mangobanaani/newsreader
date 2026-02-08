@@ -16,7 +16,7 @@ export const Clusters: React.FC = () => {
   const { data: clusterArticles, isLoading: articlesLoading } = useQuery({
     queryKey: ['cluster-articles', selectedCluster],
     queryFn: async () => {
-      if (!selectedCluster) return [];
+      if (selectedCluster === null) return [];
       // Fetch all articles and filter by cluster
       const allArticles = await articlesApi.list({ limit: 500 });
       return allArticles.filter((a: Article) => a.cluster_id === selectedCluster);

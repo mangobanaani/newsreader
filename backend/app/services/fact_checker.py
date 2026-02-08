@@ -1,5 +1,6 @@
 """Fact-checking service using LLM and external APIs."""
 
+import asyncio
 import json
 from typing import Any
 
@@ -20,6 +21,8 @@ class FactChecker:
         self.db = db
         self.provider = settings.DEFAULT_LLM_PROVIDER
         self.enabled = settings.ENABLE_LLM_FEATURES
+        self.client = None
+        self.model = None
 
         if not self.enabled:
             self.provider = "disabled"
@@ -31,6 +34,10 @@ class FactChecker:
         elif self.provider == "anthropic" and settings.ANTHROPIC_API_KEY:
             self.client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
             self.model = settings.LLM_MODEL_ANTHROPIC
+        else:
+            # No valid API key for the configured provider
+            self.enabled = False
+            self.provider = "disabled"
 
     async def extract_claims(self, article: Article) -> list[dict[str, Any]]:
         """Extract factual claims from article."""
@@ -54,14 +61,16 @@ Extract claims in JSON format:
 
         try:
             if self.provider == "anthropic":
-                response = self.client.messages.create(
+                response = await asyncio.to_thread(
+                    self.client.messages.create,
                     model=self.model,
                     max_tokens=1000,
                     messages=[{"role": "user", "content": prompt}],
                 )
                 content = response.content[0].text
             else:  # openai
-                response = openai.chat.completions.create(
+                response = await asyncio.to_thread(
+                    openai.chat.completions.create,
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=1000,
@@ -126,14 +135,16 @@ Respond in JSON:
 
         try:
             if self.provider == "anthropic":
-                response = self.client.messages.create(
+                response = await asyncio.to_thread(
+                    self.client.messages.create,
                     model=self.model,
                     max_tokens=500,
                     messages=[{"role": "user", "content": prompt}],
                 )
                 content = response.content[0].text
             else:
-                response = openai.chat.completions.create(
+                response = await asyncio.to_thread(
+                    openai.chat.completions.create,
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=500,

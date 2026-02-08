@@ -1,5 +1,6 @@
 """AI-powered recommendation engine using LLMs."""
 
+import asyncio
 import json
 
 import anthropic
@@ -20,6 +21,8 @@ class RecommendationEngine:
         self.provider = settings.DEFAULT_LLM_PROVIDER
         self.use_llm = False
         self.llm_enabled = settings.ENABLE_LLM_FEATURES
+        self.client = None
+        self.model = None
 
         if not self.llm_enabled:
             return
@@ -152,14 +155,16 @@ Respond in JSON format:
 
         try:
             if self.provider == "anthropic":
-                response = self.client.messages.create(
+                response = await asyncio.to_thread(
+                    self.client.messages.create,
                     model=self.model,
                     max_tokens=200,
                     messages=[{"role": "user", "content": prompt}],
                 )
                 content = response.content[0].text
             else:  # openai
-                response = openai.chat.completions.create(
+                response = await asyncio.to_thread(
+                    openai.chat.completions.create,
                     model=self.model,
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=200,

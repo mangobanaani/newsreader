@@ -144,13 +144,3 @@ class UserPreference(UserPreferenceBase):
     model_config = {"from_attributes": True}
 
 
-class ArticleLLMInsights(BaseModel):
-    """LLM-generated insights for an article."""
-
-    summary: str
-    key_points: list[str]
-    reliability_score: float | None = None
-    reliability_label: str | None = None
-    reliability_reason: str | None = None
-    tone: str | None = None
-    suggested_actions: list[str] = []

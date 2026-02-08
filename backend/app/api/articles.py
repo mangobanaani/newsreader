@@ -54,6 +54,14 @@ def list_articles(
     if topic:
         query = query.filter(Article.topics.like(f'%"{topic}"%'))
 
+    # Apply word filter from user preferences at the query level
+    prefs = db.query(UserPreference).filter(UserPreference.user_id == current_user.id).first()
+    if prefs and prefs.excluded_words:
+        for word in prefs.excluded_words:
+            query = query.filter(
+                ~(Article.title + " " + (Article.description or "")).ilike(f"%{word}%")
+            )
+
     # Sorting
     if sort_by == "sentiment":
         query = query.filter(Article.sentiment_score.isnot(None)).order_by(
@@ -63,16 +71,6 @@ def list_articles(
         query = query.order_by(Article.published_date.desc())
 
     articles = query.offset(skip).limit(limit).all()
-
-    # Apply word filter from user preferences
-    prefs = db.query(UserPreference).filter(UserPreference.user_id == current_user.id).first()
-    if prefs and prefs.excluded_words:
-        filtered_articles = []
-        for article in articles:
-            text = f"{article.title} {article.description or ''}".lower()
-            if not any(word.lower() in text for word in prefs.excluded_words):
-                filtered_articles.append(article)
-        return filtered_articles
 
     return articles
 
@@ -97,160 +95,7 @@ async def get_recommendations(
     return result
 
 
-@router.get("/{article_id}", response_model=ArticleSchema)
-def get_article(
-    article_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> Article:
-    """Get article by ID."""
-    article = (
-        db.query(Article)
-        .join(Article.feed)
-        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
-        .first()
-    )
-
-    if not article:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
-
-    return article
-
-
-@router.get("/{article_id}/llm-insights", response_model=ArticleLLMInsights)
-def get_article_llm_insights(
-    article_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> ArticleLLMInsights:
-    """Get AI-generated insights for a specific article."""
-    if not settings.ENABLE_LLM_FEATURES:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="LLM features are disabled"
-        )
-
-    article = (
-        db.query(Article)
-        .join(Article.feed)
-        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
-        .first()
-    )
-
-    if not article:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
-
-    service = LLMInsightService()
-    try:
-        payload = service.generate_insights(article)
-    except LLMFeatureDisabledError as exc:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
-    except LLMContentError as exc:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
-
-    return ArticleLLMInsights(**payload)
-
-
-@router.post("/{article_id}/read", response_model=ArticleSchema)
-def mark_as_read(
-    article_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> Article:
-    """Mark article as read."""
-    article = (
-        db.query(Article)
-        .join(Article.feed)
-        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
-        .first()
-    )
-
-    if not article:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
-
-    article.is_read = True
-    db.commit()
-    db.refresh(article)
-
-    return article
-
-
-@router.post("/{article_id}/bookmark", response_model=ArticleSchema)
-def toggle_bookmark(
-    article_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> Article:
-    """Toggle article bookmark status."""
-    article = (
-        db.query(Article)
-        .join(Article.feed)
-        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
-        .first()
-    )
-
-    if not article:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
-
-    article.is_bookmarked = not article.is_bookmarked
-    db.commit()
-    db.refresh(article)
-
-    return article
-
-
-@router.post("/{article_id}/rate", response_model=ArticleSchema)
-def rate_article(
-    article_id: int,
-    rating: float,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> Article:
-    """Rate an article (0.0 - 5.0)."""
-    if not 0.0 <= rating <= 5.0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Rating must be between 0.0 and 5.0",
-        )
-
-    article = (
-        db.query(Article)
-        .join(Article.feed)
-        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
-        .first()
-    )
-
-    if not article:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
-
-    article.user_rating = rating
-    db.commit()
-    db.refresh(article)
-
-    return article
-
-
-@router.post("/{article_id}/process", response_model=ArticleSchema)
-def process_article(
-    article_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> Article:
-    """Process article with NLP (generate embeddings, topics, etc.)."""
-    article = (
-        db.query(Article)
-        .join(Article.feed)
-        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
-        .first()
-    )
-
-    if not article:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
-
-    processor = NLPProcessor(db)
-    processor.process_article(article)
-
-    db.refresh(article)
-    return article
+# Static path routes MUST be registered before /{article_id} to avoid path conflicts
 
 
 @router.post("/process-all", response_model=dict[str, int | str])
@@ -275,30 +120,6 @@ def cluster_articles(
     num_clusters = processor.cluster_articles(current_user.id)
 
     return {"clusters": num_clusters}
-
-
-@router.get("/{article_id}/similar", response_model=list[ArticleSchema])
-def get_similar_articles(
-    article_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-    limit: int = 10,
-) -> list[Article]:
-    """Get similar articles based on content similarity."""
-    article = (
-        db.query(Article)
-        .join(Article.feed)
-        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
-        .first()
-    )
-
-    if not article:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
-
-    processor = NLPProcessor(db)
-    similar = processor.find_similar_articles(article, limit)
-
-    return [art for art, _ in similar]
 
 
 @router.get("/topics/all", response_model=dict[str, int])
@@ -466,8 +287,8 @@ def get_cluster_analytics(
 
     # Format response
     cluster_data = [
-        {"cluster_id": cid, "article_count": len(articles), "article_ids": articles[:10]}
-        for cid, articles in clusters.items()
+        {"cluster_id": cid, "article_count": len(article_ids), "article_ids": article_ids[:10]}
+        for cid, article_ids in clusters.items()
     ]
 
     cluster_data.sort(key=lambda x: x["article_count"], reverse=True)
@@ -597,3 +418,185 @@ def export_articles_json(
         media_type="application/json",
         headers={"Content-Disposition": "attachment; filename=articles.json"},
     )
+
+
+# Parameterized routes MUST come after all static routes
+
+@router.get("/{article_id}", response_model=ArticleSchema)
+def get_article(
+    article_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> Article:
+    """Get article by ID."""
+    article = (
+        db.query(Article)
+        .join(Article.feed)
+        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
+        .first()
+    )
+
+    if not article:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+
+    return article
+
+
+@router.get("/{article_id}/llm-insights", response_model=ArticleLLMInsights)
+def get_article_llm_insights(
+    article_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> ArticleLLMInsights:
+    """Get AI-generated insights for a specific article."""
+    if not settings.ENABLE_LLM_FEATURES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="LLM features are disabled"
+        )
+
+    article = (
+        db.query(Article)
+        .join(Article.feed)
+        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
+        .first()
+    )
+
+    if not article:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+
+    service = LLMInsightService()
+    try:
+        payload = service.generate_insights(article)
+    except LLMFeatureDisabledError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except LLMContentError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+    return ArticleLLMInsights(**payload)
+
+
+@router.post("/{article_id}/read", response_model=ArticleSchema)
+def mark_as_read(
+    article_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> Article:
+    """Mark article as read."""
+    article = (
+        db.query(Article)
+        .join(Article.feed)
+        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
+        .first()
+    )
+
+    if not article:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+
+    article.is_read = True
+    db.commit()
+    db.refresh(article)
+
+    return article
+
+
+@router.post("/{article_id}/bookmark", response_model=ArticleSchema)
+def toggle_bookmark(
+    article_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> Article:
+    """Toggle article bookmark status."""
+    article = (
+        db.query(Article)
+        .join(Article.feed)
+        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
+        .first()
+    )
+
+    if not article:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+
+    article.is_bookmarked = not article.is_bookmarked
+    db.commit()
+    db.refresh(article)
+
+    return article
+
+
+@router.post("/{article_id}/rate", response_model=ArticleSchema)
+def rate_article(
+    article_id: int,
+    rating: float,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> Article:
+    """Rate an article (0.0 - 5.0)."""
+    if not 0.0 <= rating <= 5.0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Rating must be between 0.0 and 5.0",
+        )
+
+    article = (
+        db.query(Article)
+        .join(Article.feed)
+        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
+        .first()
+    )
+
+    if not article:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+
+    article.user_rating = rating
+    db.commit()
+    db.refresh(article)
+
+    return article
+
+
+@router.post("/{article_id}/process", response_model=ArticleSchema)
+def process_article(
+    article_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> Article:
+    """Process article with NLP (generate embeddings, topics, etc.)."""
+    article = (
+        db.query(Article)
+        .join(Article.feed)
+        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
+        .first()
+    )
+
+    if not article:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+
+    processor = NLPProcessor(db)
+    processor.process_article(article)
+
+    db.refresh(article)
+    return article
+
+
+@router.get("/{article_id}/similar", response_model=list[ArticleSchema])
+def get_similar_articles(
+    article_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    limit: int = 10,
+) -> list[Article]:
+    """Get similar articles based on content similarity."""
+    article = (
+        db.query(Article)
+        .join(Article.feed)
+        .filter(Article.id == article_id, Article.feed.has(user_id=current_user.id))
+        .first()
+    )
+
+    if not article:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+
+    processor = NLPProcessor(db)
+    similar = processor.find_similar_articles(article, limit)
+
+    return [art for art, _ in similar]

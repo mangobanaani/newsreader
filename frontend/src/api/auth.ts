@@ -29,6 +29,11 @@ export const authApi = {
     localStorage.removeItem('access_token');
   },
 
+  me: async (): Promise<User> => {
+    const response = await apiClient.get<User>('/auth/me');
+    return response.data;
+  },
+
   isAuthenticated: (): boolean => {
     return !!localStorage.getItem('access_token');
   },

@@ -1,6 +1,5 @@
 """RSS feed fetching and parsing service."""
 
-import asyncio
 import re
 from datetime import datetime
 from typing import Any
@@ -125,14 +124,13 @@ class RSSFetcher:
         total_new = 0
         total_errors = 0
 
-        tasks = [self.update_feed(feed) for feed in feeds]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        for result in results:
-            if isinstance(result, Exception):
+        # Process feeds sequentially to avoid concurrent access to the same Session
+        for feed in feeds:
+            try:
+                new_articles = await self.update_feed(feed)
+                total_new += len(new_articles)
+            except Exception:
                 total_errors += 1
-            else:
-                total_new += len(result)
 
         # Automatically run clustering after fetching new articles
         if total_new > 0:

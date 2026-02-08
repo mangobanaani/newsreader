@@ -1,7 +1,8 @@
 """Authentication endpoints."""
 
+import logging
 from datetime import timedelta
-from typing import Optional
+from typing import Any
 
 from authlib.integrations.starlette_client import OAuth
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -9,6 +10,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_active_user
 from app.core.config import settings
 from app.core.security import create_access_token, get_password_hash, verify_password
 from app.db.base import get_db
@@ -16,6 +18,8 @@ from app.models.user import User
 from app.schemas.user import Token
 from app.schemas.user import User as UserSchema
 from app.schemas.user import UserCreate
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -51,23 +55,16 @@ def login(
     db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ) -> dict[str, str]:
     """Login user and return access token."""
-    print(
-        f"[DEBUG] Login attempt - username: {form_data.username}, password length: {len(form_data.password)}"
-    )
-
     user = db.query(User).filter(User.email == form_data.username).first()
 
     if not user:
-        print(f"[DEBUG] User not found: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    print(f"[DEBUG] User found: {user.email}, checking password...")
     password_ok = verify_password(form_data.password, user.hashed_password)
-    print(f"[DEBUG] Password verification result: {password_ok}")
 
     if not password_ok:
         raise HTTPException(
@@ -85,6 +82,14 @@ def login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
+@router.get("/me", response_model=UserSchema)
+def get_me(
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    """Get current authenticated user info."""
+    return current_user
+
+
 @router.get("/google/login")
 async def google_login(request: Request) -> RedirectResponse:
     """Initiate Google OAuth login flow."""
@@ -98,8 +103,8 @@ async def google_login(request: Request) -> RedirectResponse:
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-@router.get("/google/callback")
-async def google_callback(request: Request, db: Session = Depends(get_db)) -> dict[str, str]:
+@router.get("/google/callback", response_class=RedirectResponse)
+async def google_callback(request: Request, db: Session = Depends(get_db)) -> Any:
     """Handle Google OAuth callback."""
     if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
         raise HTTPException(
@@ -158,12 +163,19 @@ async def google_callback(request: Request, db: Session = Depends(get_db)) -> di
         access_token = create_access_token(subject=user.id, expires_delta=access_token_expires)
 
         # Redirect to frontend with token
+        if not settings.BACKEND_CORS_ORIGINS:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No CORS origins configured for redirect",
+            )
         frontend_url = settings.BACKEND_CORS_ORIGINS[0]
         return RedirectResponse(url=f"{frontend_url}/auth/callback?token={access_token}")
 
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"[ERROR] Google OAuth callback failed: {e}")
+        logger.exception("Google OAuth callback failed")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"OAuth authentication failed: {str(e)}",
+            detail="OAuth authentication failed",
         )

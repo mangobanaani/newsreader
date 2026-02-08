@@ -77,9 +77,9 @@ export const Analytics: React.FC = () => {
   });
 
   const { data: clusterArticles, isLoading: clusterArticlesLoading } = useQuery({
-    queryKey: ['cluster-articles', selectedCluster],
+    queryKey: ['cluster-articles', selectedCluster, articles],
     queryFn: async () => {
-      if (!selectedCluster || !articles) return [];
+      if (selectedCluster === null || !articles) return [];
       return articles.filter((article: Article) => article.cluster_id === selectedCluster);
     },
     enabled: selectedCluster !== null,

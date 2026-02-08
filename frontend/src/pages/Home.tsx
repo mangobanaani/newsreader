@@ -157,7 +157,7 @@ export const Home: React.FC = () => {
     return registerCommands(filterCommands);
   }, [filterCommands, registerCommands]);
 
-  const FiltersCard = () => (
+  const filtersCard = (
     <div className="card space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
@@ -306,7 +306,7 @@ export const Home: React.FC = () => {
               value={sentimentRange[1]}
               onChange={(e) => {
                 const newMax = parseFloat(e.target.value);
-                setSentimentRange([Math.min(newMax, sentimentRange[0]), newMax]);
+                setSentimentRange([sentimentRange[0], Math.max(newMax, sentimentRange[0])]);
               }}
               className="w-full h-2 bg-dark-tertiary rounded-lg appearance-none cursor-pointer accent-primary-500"
             />
@@ -404,7 +404,7 @@ export const Home: React.FC = () => {
         <div className="space-y-6">
           {showFilters && (
             <div className="max-w-3xl animate-fade-in">
-              <FiltersCard />
+              {filtersCard}
             </div>
           )}
 

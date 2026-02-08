@@ -162,9 +162,11 @@ class RuleEngine:
                 results.append(result)
 
                 # Check if we should skip further processing
-                for action in rule.actions or []:
-                    if action.get("type") == "skip":
-                        break
+                should_skip = any(
+                    action.get("type") == "skip" for action in (rule.actions or [])
+                )
+                if should_skip:
+                    break
 
         if results:
             self.db.commit()

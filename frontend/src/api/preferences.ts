@@ -6,6 +6,7 @@ export interface UserPreferenceUpdate {
   excluded_topics?: string[];
   preferred_sources?: string[];
   excluded_sources?: string[];
+  excluded_words?: string[];
   enable_recommendations?: boolean;
   min_relevance_score?: number;
 }

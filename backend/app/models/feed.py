@@ -3,7 +3,17 @@
 import json as json_lib
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import TypeDecorator
@@ -37,9 +47,10 @@ class Feed(Base):
     """RSS Feed model."""
 
     __tablename__ = "feeds"
+    __table_args__ = (UniqueConstraint("url", "user_id", name="uq_feed_url_user"),)
 
     id = Column(Integer, primary_key=True, index=True)
-    url = Column(String, unique=True, index=True, nullable=False)
+    url = Column(String, index=True, nullable=False)
     title = Column(String, nullable=True)
     description = Column(Text, nullable=True)
     country_code = Column(String(2), nullable=True)  # ISO 3166-1 alpha-2 country code

@@ -174,6 +174,13 @@ const CommandPaletteOverlay: React.FC<CommandPaletteOverlayProps> = ({
     }
   }, [isOpen]);
 
+  // Reset activeIndex when filtered results change to avoid out-of-bounds
+  useEffect(() => {
+    setActiveIndex((prev) =>
+      filteredCommands.length === 0 ? 0 : Math.min(prev, filteredCommands.length - 1)
+    );
+  }, [filteredCommands]);
+
   useEffect(() => {
     const handleKeyNavigation = (event: KeyboardEvent) => {
       if (!isOpen) return;
