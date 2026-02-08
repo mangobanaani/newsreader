@@ -43,7 +43,10 @@ class RuleEngine:
         elif operator == "not_equals":
             return article_value_str != str(value).lower()
         elif operator == "matches_regex":
-            return bool(re.search(value, article_value_str))
+            try:
+                return bool(re.search(value, article_value_str, flags=0))
+            except re.error:
+                return False
         elif operator == "greater_than":
             try:
                 return float(article_value) > float(value)
