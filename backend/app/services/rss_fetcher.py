@@ -131,12 +131,14 @@ class RSSFetcher:
 
         total_new = 0
         total_errors = 0
+        feeds_updated = 0
 
         # Process feeds sequentially to avoid concurrent access to the same Session
         for feed in feeds:
             try:
                 new_articles = await self.update_feed(feed)
                 total_new += len(new_articles)
+                feeds_updated += 1
             except Exception:
                 total_errors += 1
 
@@ -150,7 +152,7 @@ class RSSFetcher:
             except Exception as e:
                 print(f"Warning: Failed to cluster articles: {e}")
 
-        return {"new_articles": total_new, "errors": total_errors, "feeds_updated": len(feeds)}
+        return {"new_articles": total_new, "errors": total_errors, "feeds_updated": feeds_updated}
 
     def _parse_date(self, date_str: str | None) -> datetime | None:
         """Parse date string to datetime."""
