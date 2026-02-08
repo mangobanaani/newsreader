@@ -194,10 +194,11 @@ class NLPProcessor:
             else:
                 other_embedding = np.array(other.embedding)
 
-            similarity = float(
-                np.dot(article_embedding, other_embedding)
-                / (np.linalg.norm(article_embedding) * np.linalg.norm(other_embedding))
-            )
+            norm_a = np.linalg.norm(article_embedding)
+            norm_b = np.linalg.norm(other_embedding)
+            if norm_a == 0 or norm_b == 0:
+                continue
+            similarity = float(np.dot(article_embedding, other_embedding) / (norm_a * norm_b))
 
             if similarity >= threshold:
                 similarities.append((other, similarity))

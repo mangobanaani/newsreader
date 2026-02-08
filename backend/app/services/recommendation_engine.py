@@ -238,9 +238,12 @@ Respond in JSON format:
                             if isinstance(hist_article.embedding, str)
                             else hist_article.embedding
                         )
+                        norm_a = np.linalg.norm(article_embedding)
+                        norm_b = np.linalg.norm(hist_embedding)
+                        if norm_a == 0 or norm_b == 0:
+                            continue
                         similarity = float(
-                            np.dot(article_embedding, hist_embedding)
-                            / (np.linalg.norm(article_embedding) * np.linalg.norm(hist_embedding))
+                            np.dot(article_embedding, hist_embedding) / (norm_a * norm_b)
                         )
                         similarities.append(similarity)
 
