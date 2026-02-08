@@ -48,6 +48,9 @@ def create_feed(
         url=str(feed_in.url),
         title=feed_in.title,
         description=feed_in.description,
+        country_code=feed_in.country_code,
+        category=feed_in.category,
+        is_library=feed_in.is_library,
         user_id=current_user.id,
     )
     db.add(feed)
