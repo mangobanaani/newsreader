@@ -422,6 +422,7 @@ def export_articles_json(
 
 # Parameterized routes MUST come after all static routes
 
+
 @router.get("/{article_id}", response_model=ArticleSchema)
 def get_article(
     article_id: int,

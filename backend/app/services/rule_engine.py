@@ -162,9 +162,7 @@ class RuleEngine:
                 results.append(result)
 
                 # Check if we should skip further processing
-                should_skip = any(
-                    action.get("type") == "skip" for action in (rule.actions or [])
-                )
+                should_skip = any(action.get("type") == "skip" for action in (rule.actions or []))
                 if should_skip:
                     break
 
