@@ -48,7 +48,8 @@ class RSSFetcher:
 
     async def fetch_feed(self, feed_url: str) -> dict[str, Any]:
         """Fetch and parse RSS feed."""
-        async with aiohttp.ClientSession() as session:
+        timeout = aiohttp.ClientTimeout(total=30)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             async with session.get(str(feed_url)) as response:
                 content = await response.text()
 
