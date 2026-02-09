@@ -7,9 +7,10 @@ interface AuthState {
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
   logout: () => void;
+  fetchUser: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isAuthenticated: authApi.isAuthenticated(),
   setUser: (user) => set({ user, isAuthenticated: !!user }),
@@ -17,4 +18,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     authApi.logout();
     set({ user: null, isAuthenticated: false });
   },
+  fetchUser: async () => {
+    try {
+      const user = await authApi.me();
+      set({ user, isAuthenticated: true });
+    } catch {
+      authApi.logout();
+      set({ user: null, isAuthenticated: false });
+    }
+  },
 }));
+
+// Hydrate user from token on startup
+if (authApi.isAuthenticated()) {
+  useAuthStore.getState().fetchUser();
+}
