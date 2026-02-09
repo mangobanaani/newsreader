@@ -76,14 +76,11 @@ export const Analytics: React.FC = () => {
     queryFn: articlesApi.getClusterAnalytics,
   });
 
-  const { data: clusterArticles, isLoading: clusterArticlesLoading } = useQuery({
-    queryKey: ['cluster-articles', selectedCluster, articles],
-    queryFn: async () => {
-      if (selectedCluster === null || !articles) return [];
-      return articles.filter((article: Article) => article.cluster_id === selectedCluster);
-    },
-    enabled: selectedCluster !== null,
-  });
+  const clusterArticles = useMemo(() => {
+    if (selectedCluster === null || !articles) return [];
+    return articles.filter((article: Article) => article.cluster_id === selectedCluster);
+  }, [selectedCluster, articles]);
+  const clusterArticlesLoading = false;
 
   const timeRangeDays = timeRange === 'all' ? null : Number.parseInt(timeRange, 10);
   const cutoffDate = useMemo(() => {
