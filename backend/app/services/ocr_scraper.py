@@ -1,8 +1,8 @@
 """OCR and web scraping service."""
 
 import hashlib
-import logging
 import io
+import logging
 from typing import Any
 
 import aiohttp
