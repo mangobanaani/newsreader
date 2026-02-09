@@ -215,7 +215,7 @@ export const Preferences: React.FC = () => {
                     type="text"
                     value={newPreferredTopic}
                     onChange={(e) => setNewPreferredTopic(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addPreferredTopic()}
+                    onKeyDown={(e) => e.key === 'Enter' && addPreferredTopic()}
                     placeholder="Add a topic..."
                     className="flex-1 bg-dark-secondary border border-dark-tertiary rounded-lg px-3 py-2 text-dark-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
@@ -277,7 +277,7 @@ export const Preferences: React.FC = () => {
                     type="text"
                     value={newExcludedTopic}
                     onChange={(e) => setNewExcludedTopic(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addExcludedTopic()}
+                    onKeyDown={(e) => e.key === 'Enter' && addExcludedTopic()}
                     placeholder="Add a topic to exclude..."
                     className="flex-1 bg-dark-secondary border border-dark-tertiary rounded-lg px-3 py-2 text-dark-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
@@ -318,7 +318,7 @@ export const Preferences: React.FC = () => {
                     type="text"
                     value={newPreferredSource}
                     onChange={(e) => setNewPreferredSource(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addPreferredSource()}
+                    onKeyDown={(e) => e.key === 'Enter' && addPreferredSource()}
                     placeholder="example.com or full feed URL..."
                     className="flex-1 bg-dark-secondary border border-dark-tertiary rounded-lg px-3 py-2 text-dark-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
@@ -359,7 +359,7 @@ export const Preferences: React.FC = () => {
                     type="text"
                     value={newExcludedSource}
                     onChange={(e) => setNewExcludedSource(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addExcludedSource()}
+                    onKeyDown={(e) => e.key === 'Enter' && addExcludedSource()}
                     placeholder="example.com or full feed URL..."
                     className="flex-1 bg-dark-secondary border border-dark-tertiary rounded-lg px-3 py-2 text-dark-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
