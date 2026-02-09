@@ -102,36 +102,50 @@ export const articlesApi = {
     return response.data;
   },
 
-  // Export
-  exportCsv: (params?: {
+  // Export — downloads via fetch with Authorization header instead of leaking token in URL
+  exportCsv: async (params?: {
     topic?: string;
     min_sentiment?: number;
     max_sentiment?: number;
-  }): string => {
+  }): Promise<void> => {
     const queryParams = new URLSearchParams();
     if (params?.topic) queryParams.append('topic', params.topic);
     if (params?.min_sentiment !== undefined) queryParams.append('min_sentiment', params.min_sentiment.toString());
     if (params?.max_sentiment !== undefined) queryParams.append('max_sentiment', params.max_sentiment.toString());
 
     const token = localStorage.getItem('access_token');
-    if (token) queryParams.append('token', token);
-
-    return `${API_URL}/api/v1/articles/export/csv?${queryParams.toString()}`;
+    const response = await fetch(`${API_URL}/api/v1/articles/export/csv?${queryParams.toString()}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'articles.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   },
 
-  exportJson: (params?: {
+  exportJson: async (params?: {
     topic?: string;
     min_sentiment?: number;
     max_sentiment?: number;
-  }): string => {
+  }): Promise<void> => {
     const queryParams = new URLSearchParams();
     if (params?.topic) queryParams.append('topic', params.topic);
     if (params?.min_sentiment !== undefined) queryParams.append('min_sentiment', params.min_sentiment.toString());
     if (params?.max_sentiment !== undefined) queryParams.append('max_sentiment', params.max_sentiment.toString());
 
     const token = localStorage.getItem('access_token');
-    if (token) queryParams.append('token', token);
-
-    return `${API_URL}/api/v1/articles/export/json?${queryParams.toString()}`;
+    const response = await fetch(`${API_URL}/api/v1/articles/export/json?${queryParams.toString()}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'articles.json';
+    a.click();
+    URL.revokeObjectURL(url);
   },
 };
