@@ -1,6 +1,6 @@
 """Additional comprehensive tests for articles API endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -30,7 +30,7 @@ def test_feed_with_articles(db: Session, test_user):
             feed_id=feed.id,
             sentiment_score=0.5 if i % 2 == 0 else -0.3,
             topics=["tech", "ai"] if i % 2 == 0 else ["politics"],
-            published_date=datetime.now(timezone.utc),
+            published_date=datetime.now(UTC),
         )
         db.add(article)
         articles.append(article)

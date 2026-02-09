@@ -1,6 +1,6 @@
 """Test recommendation engine service."""
 
-from unittest.mock import MagicMock, patch
+from datetime import UTC
 
 import pytest
 from sqlalchemy.orm import Session
@@ -145,7 +145,7 @@ async def test_get_recommendations_filters_by_preferences(
 
     # Should return list of tuples (article, score, reason)
     assert isinstance(recommendations, list)
-    for article, score, reason in recommendations:
+    for article, score, _reason in recommendations:
         if article.topics and "sports" in article.topics:
             # Sports articles might be filtered out or have low scores
             assert score < 0.5
@@ -289,7 +289,7 @@ async def test_filter_already_read_articles(
     )
 
     # Should not include read article (get_recommendations filters is_read=False)
-    for article, score, reason in recommendations:
+    for article, _score, _reason in recommendations:
         assert article.id != sample_articles[0].id
 
 
@@ -299,11 +299,11 @@ async def test_boost_recent_articles(
 ):
     """Test that recent articles get score boost."""
     import json
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     # Set recent published date
     recent_article = sample_articles[0]
-    recent_article.published_date = datetime.now(timezone.utc)
+    recent_article.published_date = datetime.now(UTC)
     recent_article.embedding = json.dumps([0.1] * 768)
     db.commit()
 

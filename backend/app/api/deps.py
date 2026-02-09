@@ -27,8 +27,8 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
         if user_id_raw is None:
             raise credentials_exception
         user_id = int(user_id_raw)
-    except (InvalidTokenError, ValueError, TypeError):
-        raise credentials_exception
+    except (InvalidTokenError, ValueError, TypeError) as exc:
+        raise credentials_exception from exc
 
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:

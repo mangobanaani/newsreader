@@ -1,8 +1,5 @@
 """Test RSS fetcher service."""
 
-from datetime import datetime
-from unittest.mock import MagicMock, patch
-
 import pytest
 from sqlalchemy.orm import Session
 

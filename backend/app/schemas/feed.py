@@ -1,9 +1,8 @@
 """Feed and Article schemas."""
 
-import json
 from datetime import datetime
 
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import BaseModel, HttpUrl
 
 
 class FeedBase(BaseModel):

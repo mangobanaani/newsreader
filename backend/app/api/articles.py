@@ -173,7 +173,6 @@ def get_sentiment_analytics(
 
     # Daily sentiment trends (last 7 days)
     from collections import defaultdict
-    from datetime import datetime, timedelta
 
     daily_sentiment: dict[str, dict[str, int]] = defaultdict(
         lambda: {"positive": 0, "neutral": 0, "negative": 0}

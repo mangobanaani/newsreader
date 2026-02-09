@@ -48,9 +48,8 @@ jobs:
     - name: Run linters
       run: |
         cd backend
-        black --check app tests
-        isort --check-only app tests
-        flake8 app tests
+        ruff format --check app tests
+        ruff check app tests
         mypy app
 
     - name: Run tests

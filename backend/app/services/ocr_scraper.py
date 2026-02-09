@@ -2,7 +2,6 @@
 
 import hashlib
 import io
-import logging
 from typing import Any
 
 import aiohttp
@@ -126,7 +125,7 @@ class OCRScraper:
             # Extract based on CSS selectors
             if destination.css_selectors:
                 extracted_parts = []
-                for key, selector in destination.css_selectors.items():
+                for _key, selector in destination.css_selectors.items():
                     elements = soup.select(selector)
                     for elem in elements:
                         extracted_parts.append(elem.get_text())

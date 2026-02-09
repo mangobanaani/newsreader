@@ -158,7 +158,7 @@ class FuzzyMatcher:
         duplicate_groups = []
 
         # Find duplicate groups
-        for i, article in enumerate(articles):
+        for article in articles:
             if article.id in marked_for_removal:
                 continue
 

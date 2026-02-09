@@ -153,7 +153,7 @@ class NLPProcessor:
         labels = clustering.fit_predict(embeddings)
 
         # Update cluster IDs
-        for article, label in zip(articles, labels):
+        for article, label in zip(articles, labels, strict=False):
             article.cluster_id = int(label) if label != -1 else None
 
         self.db.commit()
@@ -514,7 +514,6 @@ class NLPProcessor:
             "read",
             "more",
             "click",
-            "here",
             "article",
             "post",
             "page",

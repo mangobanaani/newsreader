@@ -63,9 +63,11 @@ class AdvancedNLPProcessor:
 
         # Simple pattern matching for demonstration
         for tech in tech_keywords:
-            if re.search(rf"\b{re.escape(tech)}\b", text, re.IGNORECASE):
-                if tech not in entities["technologies"]:
-                    entities["technologies"].append(tech)
+            if (
+                re.search(rf"\b{re.escape(tech)}\b", text, re.IGNORECASE)
+                and tech not in entities["technologies"]
+            ):
+                entities["technologies"].append(tech)
 
         # Extract capitalized phrases as potential entities
         # This is very basic - use NER model in production

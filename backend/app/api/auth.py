@@ -12,12 +12,11 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user
 from app.core.config import settings
-from app.core.security import create_access_token, get_password_hash, verify_password
+from app.core.security import create_access_token, verify_password
 from app.db.base import get_db
 from app.models.user import User
-from app.schemas.user import Token
+from app.schemas.user import Token, UserCreate
 from app.schemas.user import User as UserSchema
-from app.schemas.user import UserCreate
 
 logger = logging.getLogger(__name__)
 
@@ -180,9 +179,9 @@ async def google_callback(request: Request, db: Session = Depends(get_db)) -> An
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception as exc:
         logger.exception("Google OAuth callback failed")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="OAuth authentication failed",
-        )
+        ) from exc

@@ -49,9 +49,11 @@ class RSSFetcher:
     async def fetch_feed(self, feed_url: str) -> dict[str, Any]:
         """Fetch and parse RSS feed."""
         timeout = aiohttp.ClientTimeout(total=30)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(str(feed_url)) as response:
-                content = await response.text()
+        async with (
+            aiohttp.ClientSession(timeout=timeout) as session,
+            session.get(str(feed_url)) as response,
+        ):
+            content = await response.text()
 
         feed_data = feedparser.parse(content)
         return {
@@ -123,7 +125,7 @@ class RSSFetcher:
 
         except Exception as e:
             self.db.rollback()
-            raise Exception(f"Failed to fetch feed {feed.url}: {str(e)}")
+            raise Exception(f"Failed to fetch feed {feed.url}: {str(e)}") from e
 
     async def update_all_feeds(self, user_id: int) -> dict[str, int]:
         """Update all active feeds for a user."""

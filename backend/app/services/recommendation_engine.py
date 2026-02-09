@@ -119,7 +119,9 @@ class RecommendationEngine:
             sentiment_label = (
                 "positive"
                 if article.sentiment_score > 0.05
-                else "negative" if article.sentiment_score < -0.05 else "neutral"
+                else "negative"
+                if article.sentiment_score < -0.05
+                else "neutral"
             )
             article_parts.append(f"Sentiment: {sentiment_label} ({article.sentiment_score:.2f})")
 

@@ -1,6 +1,6 @@
 """Test articles endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -31,12 +31,12 @@ def test_articles(db: Session, test_feed):
     articles = []
     for i in range(5):
         article = Article(
-            title=f"Test Article {i+1}",
-            link=f"https://example.com/article{i+1}",
-            description=f"Description for article {i+1}",
-            content=f"Content for article {i+1}",
-            author=f"Author {i+1}",
-            published_date=datetime.now(timezone.utc),
+            title=f"Test Article {i + 1}",
+            link=f"https://example.com/article{i + 1}",
+            description=f"Description for article {i + 1}",
+            content=f"Content for article {i + 1}",
+            author=f"Author {i + 1}",
+            published_date=datetime.now(UTC),
             feed_id=test_feed.id,
             is_read=i % 2 == 0,  # Make some read, some unread
             is_bookmarked=i == 0,  # Bookmark first article
