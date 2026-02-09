@@ -53,7 +53,8 @@ def list_articles(
 
     # Topic filtering (check if topic JSON contains the string)
     if topic:
-        query = query.filter(Article.topics.like(f'%"{topic}"%'))
+        escaped_topic = topic.replace("%", r"\%").replace("_", r"\_").replace('"', "")
+        query = query.filter(Article.topics.like(f'%"{escaped_topic}"%'))
 
     # Apply word filter from user preferences at the query level
     prefs = db.query(UserPreference).filter(UserPreference.user_id == current_user.id).first()
@@ -319,7 +320,8 @@ def export_articles_csv(
     if max_sentiment is not None:
         query = query.filter(Article.sentiment_score <= max_sentiment)
     if topic:
-        query = query.filter(Article.topics.like(f'%"{topic}"%'))
+        escaped_topic = topic.replace("%", r"\%").replace("_", r"\_").replace('"', "")
+        query = query.filter(Article.topics.like(f'%"{escaped_topic}"%'))
 
     articles = query.order_by(Article.published_date.desc()).all()
 
@@ -388,7 +390,8 @@ def export_articles_json(
     if max_sentiment is not None:
         query = query.filter(Article.sentiment_score <= max_sentiment)
     if topic:
-        query = query.filter(Article.topics.like(f'%"{topic}"%'))
+        escaped_topic = topic.replace("%", r"\%").replace("_", r"\_").replace('"', "")
+        query = query.filter(Article.topics.like(f'%"{escaped_topic}"%'))
 
     articles = query.order_by(Article.published_date.desc()).all()
 
