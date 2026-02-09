@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { articlesApi } from '../api/articles';
 import { Layout } from '../components/Layout';
 import { ArticleCard } from '../components/ArticleCard';
@@ -7,51 +7,60 @@ import type { Article } from '../types';
 
 export const Clusters: React.FC = () => {
   const [selectedCluster, setSelectedCluster] = useState<number | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: clusterData, isLoading: clustersLoading } = useQuery({
     queryKey: ['cluster-analytics'],
     queryFn: articlesApi.getClusterAnalytics,
   });
 
-  const { data: clusterArticles, isLoading: articlesLoading } = useQuery({
-    queryKey: ['cluster-articles', selectedCluster],
-    queryFn: async () => {
-      if (selectedCluster === null) return [];
-      // Fetch all articles and filter by cluster
-      const allArticles = await articlesApi.list({ limit: 500 });
-      return allArticles.filter((a: Article) => a.cluster_id === selectedCluster);
-    },
-    enabled: selectedCluster !== null,
-  });
-
-  const sortedClusters = clusterData?.clusters || [];
-
-  // Get sample topics from a cluster
-  const getClusterTopics = (articleIds: number[], allArticles?: Article[]): string[] => {
-    if (!allArticles) return [];
-    const clusterArticles = allArticles.filter(a => articleIds.includes(a.id));
-    const allTopics: string[] = [];
-    clusterArticles.forEach(article => {
-      if (article.topics) {
-        allTopics.push(...article.topics);
-      }
-    });
-    // Get most common topics
-    const topicCounts = allTopics.reduce((acc, topic) => {
-      acc[topic] = (acc[topic] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    return Object.entries(topicCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([topic]) => topic);
-  };
-
-  // Fetch all articles to get topics
+  // Fetch all articles once and reuse for both topics and cluster detail
   const { data: allArticles } = useQuery({
     queryKey: ['all-articles'],
     queryFn: () => articlesApi.list({ limit: 500 }),
   });
+
+  const clusterArticles = useMemo(() => {
+    if (selectedCluster === null || !allArticles) return [];
+    return allArticles.filter((a: Article) => a.cluster_id === selectedCluster);
+  }, [selectedCluster, allArticles]);
+
+  const sortedClusters = clusterData?.clusters || [];
+
+  // Get sample topics from a cluster
+  const getClusterTopics = useMemo(() => {
+    if (!allArticles) return (_articleIds: number[]) => [] as string[];
+    return (articleIds: number[]): string[] => {
+      const idSet = new Set(articleIds);
+      const filtered = allArticles.filter(a => idSet.has(a.id));
+      const allTopics: string[] = [];
+      filtered.forEach(article => {
+        if (article.topics) {
+          allTopics.push(...article.topics);
+        }
+      });
+      const topicCounts = allTopics.reduce((acc, topic) => {
+        acc[topic] = (acc[topic] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      return Object.entries(topicCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([topic]) => topic);
+    };
+  }, [allArticles]);
+
+  const handleRead = (id: number) => {
+    articlesApi.markAsRead(id).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['all-articles'] });
+    });
+  };
+
+  const handleBookmark = (id: number) => {
+    articlesApi.toggleBookmark(id).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['all-articles'] });
+    });
+  };
 
   return (
     <Layout>
@@ -75,51 +84,53 @@ export const Clusters: React.FC = () => {
         {/* Cluster Grid */}
         {!clustersLoading && sortedClusters.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedClusters.map((cluster) => (
-              <button
-                key={cluster.cluster_id}
-                onClick={() => setSelectedCluster(cluster.cluster_id)}
-                className={`card text-left transition-all hover:scale-105 ${
-                  selectedCluster === cluster.cluster_id
-                    ? 'ring-2 ring-primary-500 bg-primary-600/10'
-                    : 'hover:bg-dark-secondary'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-dark-700">
-                    Cluster {cluster.cluster_id}
-                  </h3>
-                  <div className="w-10 h-10 rounded-full bg-primary-600/20 flex items-center justify-center">
-                    <span className="text-primary-400 font-bold">
-                      {cluster.article_count}
-                    </span>
+            {sortedClusters.map((cluster) => {
+              const topics = getClusterTopics(cluster.article_ids);
+              return (
+                <button
+                  key={cluster.cluster_id}
+                  onClick={() => setSelectedCluster(cluster.cluster_id)}
+                  className={`card text-left transition-all hover:scale-105 ${
+                    selectedCluster === cluster.cluster_id
+                      ? 'ring-2 ring-primary-500 bg-primary-600/10'
+                      : 'hover:bg-dark-secondary'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold text-dark-700">
+                      Cluster {cluster.cluster_id}
+                    </h3>
+                    <div className="w-10 h-10 rounded-full bg-primary-600/20 flex items-center justify-center">
+                      <span className="text-primary-400 font-bold">
+                        {cluster.article_count}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <p className="text-sm text-dark-500">
-                  {cluster.article_count} {cluster.article_count === 1 ? 'article' : 'articles'}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {getClusterTopics(cluster.article_ids, allArticles).map((topic) => (
-                    <span
-                      key={topic}
-                      className="text-xs px-2 py-1 rounded bg-primary-600/20 text-primary-400"
-                    >
-                      {topic}
-                    </span>
-                  ))}
-                  {getClusterTopics(cluster.article_ids, allArticles).length === 0 && (
-                    <span className="text-xs text-dark-500">No topics</span>
-                  )}
-                </div>
-              </button>
-            ))}
+                  <p className="text-sm text-dark-500">
+                    {cluster.article_count} {cluster.article_count === 1 ? 'article' : 'articles'}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {topics.map((topic) => (
+                      <span
+                        key={topic}
+                        className="text-xs px-2 py-1 rounded bg-primary-600/20 text-primary-400"
+                      >
+                        {topic}
+                      </span>
+                    ))}
+                    {topics.length === 0 && (
+                      <span className="text-xs text-dark-500">No topics</span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
 
         {/* Empty state */}
         {!clustersLoading && sortedClusters.length === 0 && (
           <div className="card text-center py-12">
-            <div className="text-6xl mb-4">🔗</div>
             <p className="text-dark-500 text-lg">No clusters found</p>
             <p className="text-dark-400 mt-2">
               Run the clustering process to group similar articles together
@@ -142,27 +153,20 @@ export const Clusters: React.FC = () => {
               </button>
             </div>
 
-            {articlesLoading && (
-              <div className="text-center py-8">
-                <div className="inline-block w-6 h-6 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-dark-500 mt-2">Loading articles...</p>
-              </div>
-            )}
-
-            {!articlesLoading && clusterArticles && clusterArticles.length > 0 && (
+            {clusterArticles.length > 0 && (
               <div className="space-y-4">
                 {clusterArticles.map((article: Article) => (
                   <ArticleCard
                     key={article.id}
                     article={article}
-                    onRead={() => {}}
-                    onBookmark={() => {}}
+                    onRead={handleRead}
+                    onBookmark={handleBookmark}
                   />
                 ))}
               </div>
             )}
 
-            {!articlesLoading && clusterArticles && clusterArticles.length === 0 && (
+            {clusterArticles.length === 0 && (
               <div className="card text-center py-8">
                 <p className="text-dark-500">No articles found in this cluster</p>
               </div>
