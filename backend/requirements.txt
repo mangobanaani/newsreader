@@ -6,11 +6,11 @@ email-validator==2.1.0
 sqlalchemy==2.0.25
 alembic==1.13.1
 psycopg2-binary==2.9.9
-PyJWT==2.10.1
+PyJWT==2.13.0
 passlib[bcrypt]==1.7.4
 bcrypt<4.0.0  # Compatibility with passlib
-python-multipart==0.0.22
-authlib==1.6.7
+python-multipart==0.0.30
+authlib==1.6.9
 feedparser==6.0.11
 aiohttp==3.13.3
 redis==5.0.1
@@ -24,7 +24,7 @@ httpx==0.26.0
 
 # OCR and scraping
 pytesseract==0.3.10
-Pillow==11.1.0
+Pillow==12.2.0
 beautifulsoup4==4.12.3
 pypdf==6.6.2
 playwright==1.41.2
